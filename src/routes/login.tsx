@@ -31,7 +31,8 @@ function LoginPage() {
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold tracking-tight">duynhlab Backoffice</h1>
           <p className="text-sm text-muted-foreground">
-            Operator sign-in is handled by Keycloak. You need the{' '}
+            Operator sign-in is handled by the Keycloak staff realm — store
+            accounts cannot sign in here. You need the{' '}
             <span className="font-mono text-[13px]">backoffice_admin</span> role.
           </p>
         </div>

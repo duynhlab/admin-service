@@ -4,15 +4,18 @@ import Keycloak from 'keycloak-js'
  * Keycloak singleton (RFC-0023, mirroring the customer SPA's proven adapter
  * shape from RFC-0024 P3).
  *
- * Authentication is delegated to Keycloak (realm `duynhlab`, public client
- * `admin-portal`, Authorization Code + PKCE S256). Tokens live in memory
+ * Authentication is delegated to Keycloak — the WORKFORCE realm
+ * `duynhlab-staff` (ADR-050: operators and customers are separate identity
+ * populations; the customer realm cannot mint a token this app or the
+ * protected APIs accept), public client `admin-portal`, Authorization Code +
+ * PKCE S256. Tokens live in memory
  * inside the keycloak-js adapter — never web storage, never logged. The
  * frontend role check is UX only: every service re-verifies the token and the
  * `backoffice_admin` role on every request (ADR-047).
  *
  * Config mirrors the platform's VITE_* conditional-bake pattern:
  *   VITE_KEYCLOAK_URL       → Keycloak origin (default http://localhost:8081)
- *   VITE_KEYCLOAK_REALM     → realm name (default duynhlab)
+ *   VITE_KEYCLOAK_REALM     → realm name (default duynhlab-staff)
  *   VITE_KEYCLOAK_CLIENT_ID → public client id (default admin-portal)
  */
 
@@ -20,7 +23,7 @@ export const BACKOFFICE_ROLE = 'backoffice_admin'
 
 const keycloak = new Keycloak({
   url: import.meta.env.VITE_KEYCLOAK_URL ?? 'http://localhost:8081',
-  realm: import.meta.env.VITE_KEYCLOAK_REALM ?? 'duynhlab',
+  realm: import.meta.env.VITE_KEYCLOAK_REALM ?? 'duynhlab-staff',
   clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? 'admin-portal',
 })
 

@@ -7,19 +7,19 @@ import type { Page } from '@playwright/test'
  * operator's subject as actor. Runs as alice (backoffice_admin).
  */
 
-async function loginAsAlice(page: Page) {
+async function loginAsOperator(page: Page) {
   await page.goto('/')
   await page.waitForURL(/\/login/)
   await page.getByRole('button', { name: 'Sign in with Keycloak' }).click()
   await page.waitForURL(/localhost:8081/)
-  await page.locator('#username').fill('alice')
-  await page.locator('#password').fill('password123')
+  await page.locator('#username').fill('duyne')
+  await page.locator('#password').fill('p@ss1234')
   await page.locator('#kc-login').click()
   await page.waitForURL(/localhost:3009/)
 }
 
 test('balances list real rows and the low-stock filter round-trips the URL', async ({ page }) => {
-  await loginAsAlice(page)
+  await loginAsOperator(page)
   await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Inventory' }).click()
 
   // Real seeded data: at least one balance row with a numeric ATP.
@@ -42,7 +42,7 @@ test('balances list real rows and the low-stock filter round-trips the URL', asy
 })
 
 test('receive command applies through the dialog and lands in the ledger', async ({ page }) => {
-  await loginAsAlice(page)
+  await loginAsOperator(page)
   await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Inventory' }).click()
 
   // Pin the view to one SKU so row assertions are deterministic.
@@ -71,5 +71,5 @@ test('receive command applies through the dialog and lands in the ledger', async
   const ledgerRow = page.getByRole('table').getByRole('row').nth(1)
   await expect(ledgerRow.getByText('RECEIVE')).toBeVisible()
   await expect(ledgerRow.getByText('PW-E2E')).toBeVisible()
-  await expect(ledgerRow.getByText('a11ce000-0000-4000-8000-000000000001')).toBeVisible()
+  await expect(ledgerRow.getByText('d0e00000-0000-4000-8000-000000000001')).toBeVisible()
 })
