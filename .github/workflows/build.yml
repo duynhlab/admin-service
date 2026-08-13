@@ -34,14 +34,14 @@ jobs:
         run: npm run build
 
   gitleaks:
-    uses: duynhlab/gha-workflows/.github/workflows/gitleaks.yml@f70d09f08fdc225c9c674c51812d8708d0b836b5 # v1.0.2
+    uses: duynhlab/gha-workflows/.github/workflows/gitleaks.yml@725eb66998f03be252de9b11ef4bb530e59b9dd7 # v1.0.2
     permissions:
       contents: read
       security-events: write
 
   docker-build:
     needs: [lint, gitleaks]
-    uses: duynhlab/gha-workflows/.github/workflows/docker-build-node.yml@f70d09f08fdc225c9c674c51812d8708d0b836b5 # v1.0.2
+    uses: duynhlab/gha-workflows/.github/workflows/docker-build-node.yml@725eb66998f03be252de9b11ef4bb530e59b9dd7 # v1.0.2
     with:
       image-name: '${{ github.event.repository.name }}'
       push: true
@@ -59,7 +59,7 @@ jobs:
   trivy-scan:
     needs: [docker-build]
     if: needs.docker-build.outputs.scan-status == 'pass'
-    uses: duynhlab/gha-workflows/.github/workflows/trivy-scan.yml@f70d09f08fdc225c9c674c51812d8708d0b836b5 # v1.0.2
+    uses: duynhlab/gha-workflows/.github/workflows/trivy-scan.yml@725eb66998f03be252de9b11ef4bb530e59b9dd7 # v1.0.2
     with:
       image-ref: ghcr.io/${{ github.repository }}/${{ github.event.repository.name }}@${{ needs.docker-build.outputs.digest }}
       severity: 'CRITICAL,HIGH'
@@ -76,7 +76,7 @@ jobs:
 
   docker-sign:
     needs: [docker-build, trivy-scan]
-    uses: duynhlab/gha-workflows/.github/workflows/docker-sign.yml@f70d09f08fdc225c9c674c51812d8708d0b836b5 # v1.0.2
+    uses: duynhlab/gha-workflows/.github/workflows/docker-sign.yml@725eb66998f03be252de9b11ef4bb530e59b9dd7 # v1.0.2
     with:
       tags: ${{ needs.docker-build.outputs.tags }}
       digest: ${{ needs.docker-build.outputs.digest }}
@@ -88,7 +88,7 @@ jobs:
   notify:
     if: always()
     needs: [lint, gitleaks, docker-build, trivy-scan, docker-sign]
-    uses: duynhlab/gha-workflows/.github/workflows/status.yml@f70d09f08fdc225c9c674c51812d8708d0b836b5 # v1.0.2
+    uses: duynhlab/gha-workflows/.github/workflows/status.yml@725eb66998f03be252de9b11ef4bb530e59b9dd7 # v1.0.2
     with:
       slack_channel_id: "C0AD82A9A74"
       gsheet_spreadsheet_id: "1F2VUrAOyMGnETApp5yA-ldCW81ConiQXnWYZVxKas_0"
