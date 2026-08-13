@@ -40,7 +40,7 @@ test('operator logs in, sees the shell, and logs out', async ({ page }) => {
   }
 
   // Sections without a backend slice say so — never placeholder data.
-  await nav.getByRole('link', { name: 'Inventory' }).click()
+  await nav.getByRole('link', { name: 'Catalog' }).click()
   await expect(page.getByText('Waiting for its API slice')).toBeVisible()
 
   await page.getByRole('button', { name: 'Sign out' }).click()
