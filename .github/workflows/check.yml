@@ -1,0 +1,58 @@
+name: Check
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+  security-events: write
+
+jobs:
+  pr-checks:
+    uses: duynhlab/gha-workflows/.github/workflows/pr-checks.yml@f70d09f08fdc225c9c674c51812d8708d0b836b5 # v1.0.2
+    with:
+      slack_channel_id: "C0AD82A9A74"
+    secrets:
+      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build (typecheck + bundle)
+        run: npm run build
+
+  # No CI e2e job on purpose: the portal has NO mock layer (owner rule), so
+  # Playwright needs the live local-stack (Keycloak + edge + services). The
+  # e2e gate runs locally against compose per homelab
+  # local-stack/docs/e2e-audit.md before anything merges or tags.
+
+  notify:
+    # Dependabot PRs run without repo secrets — the Slack call can only fail
+    # there and paints every deps PR red for no reason.
+    if: always() && github.actor != 'dependabot[bot]'
+    needs: [pr-checks, lint]
+    uses: duynhlab/gha-workflows/.github/workflows/status.yml@f70d09f08fdc225c9c674c51812d8708d0b836b5 # v1.0.2
+    with:
+      slack_channel_id: "C0AD82A9A74"
+      slack_thread_ts: ${{ needs.pr-checks.outputs.slack_thread_ts }}
+      gsheet_spreadsheet_id: "1F2VUrAOyMGnETApp5yA-ldCW81ConiQXnWYZVxKas_0"
+    secrets:
+      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      GSHEET_CLIENT_EMAIL: ${{ secrets.GSHEET_CLIENT_EMAIL }}
+      GSHEET_PRIVATE_KEY: ${{ secrets.GSHEET_PRIVATE_KEY }}
