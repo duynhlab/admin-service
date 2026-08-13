@@ -62,7 +62,7 @@ test('a store account cannot sign in at all — wrong realm', async ({ page }) =
   await page.locator('#username').fill('alice')
   await page.locator('#password').fill('password123')
   await page.locator('#kc-login').click()
-  await expect(page.locator('#input-error')).toContainText(/Invalid username or password/i)
+  await expect(page.getByText(/Invalid username or password/i)).toBeVisible()
   await expect(page).toHaveURL(/realms\/duynhlab-staff/)
 })
 
