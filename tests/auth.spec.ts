@@ -4,9 +4,10 @@ import type { Page } from '@playwright/test'
 
 /**
  * Foundation smoke: the full OIDC round-trip against the real local-stack
- * Keycloak (realm `duynhlab`, client `admin-portal`), the role gate, logout,
- * and axe scans. Demo users are seeded by the realm import: alice holds
- * `backoffice_admin`; bob is customer-only. Login is by username.
+ * Keycloak (WORKFORCE realm `duynhlab-staff`, client `admin-portal` —
+ * ADR-050), the identity fence, logout, and axe scans. The operator `duyne`
+ * is seeded by the staff realm import; store accounts live in the customer
+ * realm and cannot sign in here at all. Login is by username.
  */
 
 async function loginViaKeycloak(page: Page, username: string, password: string) {
@@ -21,7 +22,7 @@ async function loginViaKeycloak(page: Page, username: string, password: string) 
 }
 
 test('operator logs in, sees the shell, and logs out', async ({ page }) => {
-  await loginViaKeycloak(page, 'alice', 'password123')
+  await loginViaKeycloak(page, 'duyne', 'p@ss1234')
 
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
   await expect(page.getByText('backoffice_admin')).toBeVisible()
@@ -50,15 +51,19 @@ test('operator logs in, sees the shell, and logs out', async ({ page }) => {
   ).toBeVisible()
 })
 
-test('a customer without the role is stopped at the gate', async ({ page }) => {
-  await loginViaKeycloak(page, 'bob', 'password123')
-
-  await page.waitForURL(/\/forbidden/)
-  await expect(page.getByRole('heading', { name: 'Access denied' })).toBeVisible()
-  await expect(page.getByText('bob', { exact: true })).toBeVisible()
-
-  await page.getByRole('button', { name: 'Sign out' }).click()
+test('a store account cannot sign in at all — wrong realm', async ({ page }) => {
+  // ADR-050 identity fence, stronger than the old 403: alice exists only in
+  // the CUSTOMER realm, so the staff realm rejects the credentials outright.
+  await page.goto('/')
   await page.waitForURL(/\/login/)
+  await page.getByRole('button', { name: 'Sign in with Keycloak' }).click()
+  await page.waitForURL(/localhost:8081/)
+  await expect(page).toHaveURL(/realms\/duynhlab-staff/)
+  await page.locator('#username').fill('alice')
+  await page.locator('#password').fill('password123')
+  await page.locator('#kc-login').click()
+  await expect(page.getByText(/Invalid username or password/i)).toBeVisible()
+  await expect(page).toHaveURL(/realms\/duynhlab-staff/)
 })
 
 test('login page has no serious accessibility violations', async ({ page }) => {
@@ -73,7 +78,7 @@ test('login page has no serious accessibility violations', async ({ page }) => {
 })
 
 test('dashboard has no serious accessibility violations', async ({ page }) => {
-  await loginViaKeycloak(page, 'alice', 'password123')
+  await loginViaKeycloak(page, 'duyne', 'p@ss1234')
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
   const results = await new AxeBuilder({ page }).analyze()
   expect(

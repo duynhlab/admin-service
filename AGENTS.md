@@ -16,11 +16,11 @@ bypassing the edge (ADR-047/048).
 | Fact | Value |
 |------|-------|
 | Stack | React 19 + TypeScript strict + Vite; TanStack Router/Query/Table/Form; zod; Tailwind v4 + shadcn/ui (`base-nova`, Base UI primitives — `render` prop, **not** `asChild`); keycloak-js |
-| Auth | Keycloak realm `duynhlab`, public client `admin-portal`, PKCE S256, in-memory tokens (`src/lib/auth.ts`) |
+| Auth | Keycloak **workforce realm `duynhlab-staff`** (ADR-050 — customers live in `duynhlab` and cannot sign in here), public client `admin-portal`, PKCE S256, in-memory tokens (`src/lib/auth.ts`) |
 | Operator role | `backoffice_admin` — frontend guard is UX only; services re-verify everything |
 | Dev server | `npm run dev` → **http://localhost:3009** (the port the realm client + edge CORS allowlist) |
 | Local platform | `cd ../homelab/local-stack && docker compose up -d` (Keycloak :8081, edge :8080) |
-| Demo users | `alice` / `password123` (operator), `bob` (customer — hits the 403 gate). Login by **username** |
+| Demo users | Operator **`duyne` / `p@ss1234`** (staff realm). Store accounts (alice/bob, customer realm) cannot sign in here at all — wrong realm, wrong issuer. Login by **username** |
 | API truth | homelab **`docs/api/`** (esp. `api.md` § Protected route conventions) — never service READMEs |
 | Design authority | The owner's **`product-design`** skill (agent IDE); tokens live in `src/index.css` |
 

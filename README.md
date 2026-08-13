@@ -10,7 +10,7 @@ database, no BFF (ADR-048).
 | | |
 |---|---|
 | Stack | React 19 · TypeScript · Vite · TanStack Router/Query/Table/Form · zod · Tailwind v4 · shadcn/ui · keycloak-js |
-| Auth | Keycloak `duynhlab` realm, `admin-portal` client (PKCE S256), role `backoffice_admin` |
+| Auth | Keycloak **`duynhlab-staff`** realm (workforce, ADR-050), `admin-portal` client (PKCE S256), role `backoffice_admin` |
 | Dev URL | http://localhost:3009 |
 | API | Envoy Gateway edge at http://localhost:8080 (local) — contracts in homelab `docs/api/` |
 
@@ -22,7 +22,7 @@ cd ../homelab/local-stack && docker compose up -d
 
 # 2. Start the portal:
 npm install
-npm run dev            # http://localhost:3009 — sign in as alice / password123
+npm run dev            # http://localhost:3009 — sign in as duyne / p@ss1234
 
 # Checks:
 npm run build          # typecheck + bundle
