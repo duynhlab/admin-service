@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { DataTable, dataTableFeatures } from '@/components/data-table'
 import { listOrders, ORDER_STATUSES } from '@/features/orders/api'
 import type { Order, OrderStatus } from '@/features/orders/api'
+import { ordersKeys } from '@/features/orders/queries'
 import { ApiError } from '@/lib/api'
 import { formatMinor, StatusChips } from '@/lib/format'
 
@@ -23,7 +24,7 @@ export const Route = createFileRoute('/_authenticated/orders')({
 
 export const ordersQuery = (q: { page: number; page_size: number; status?: OrderStatus }) =>
   queryOptions({
-    queryKey: ['orders', 'list', q] as const,
+    queryKey: [...ordersKeys.all, 'list', q] as const,
     queryFn: ({ signal }) => listOrders(q, signal),
   })
 

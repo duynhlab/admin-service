@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { queryOptions, useQuery } from '@tanstack/react-query'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -12,14 +14,29 @@ import {
 import { DetailHeader, DetailStates, Field, FieldGrid } from '@/components/detail'
 import { getOrder } from '@/features/orders/api'
 import type { OrderStatus } from '@/features/orders/api'
+import { ResolveDialog } from '@/features/orders/order-dialogs'
+import { ordersKeys } from '@/features/orders/queries'
+import { StatusTimeline } from '@/features/orders/status-timeline'
+import { ExternalTruths } from '@/features/orders/external-truths'
 import { formatMinor } from '@/lib/format'
+
+/**
+ * The operator case view. Beyond the order itself it carries the three external
+ * truths (payment, reservation, shipment) and the transition history, because
+ * the decision this page can lead to — resolving out of `manual_review` — is
+ * one the service cannot verify (ADR-051). Everything an operator needs to
+ * check has to be here, or they will check nothing.
+ */
 
 export const Route = createFileRoute('/_authenticated/orders_/$orderId')({
   component: OrderCasePage,
 })
 
 const orderQuery = (id: string) =>
-  queryOptions({ queryKey: ['orders', 'detail', id] as const, queryFn: ({ signal }) => getOrder(id, signal) })
+  queryOptions({
+    queryKey: [...ordersKeys.all, 'detail', id] as const,
+    queryFn: ({ signal }) => getOrder(id, signal),
+  })
 
 const statusVariant = (s: OrderStatus) =>
   s === 'manual_review' || s === 'cancelling' ? 'destructive'
@@ -29,6 +46,7 @@ function OrderCasePage() {
   const { orderId } = Route.useParams()
   const query = useQuery(orderQuery(orderId))
   const order = query.data
+  const [resolving, setResolving] = useState(false)
 
   return (
     <div className="flex flex-col gap-4">
@@ -37,6 +55,13 @@ function OrderCasePage() {
         backLabel="Orders"
         title={`Order #${orderId}`}
         badge={order && <Badge variant={statusVariant(order.status)}>{order.status}</Badge>}
+        actions={
+          order?.status === 'manual_review' && (
+            <Button variant="destructive" onClick={() => setResolving(true)}>
+              Resolve
+            </Button>
+          )
+        }
       />
       <DetailStates
         isPending={query.isPending}
@@ -98,9 +123,34 @@ function OrderCasePage() {
                 </Table>
               </div>
             </section>
+
+            <ExternalTruths order={order} />
+
+            <section className="flex flex-col gap-2">
+              <h2 className="text-sm font-medium">Transition history</h2>
+              <p className="text-xs text-muted-foreground">
+                Every status change, newest first. order-service writes each row in the
+                same transaction as the change, so this is the record — not a log that
+                could be missing one.
+              </p>
+              <div className="rounded-xl border bg-card px-4">
+                {order.degraded?.includes('status_history') ? (
+                  <p className="py-4 text-sm text-destructive">
+                    The history could not be read. Do not read this as "nothing
+                    happened" — reload before deciding.
+                  </p>
+                ) : (
+                  <StatusTimeline rows={order.status_history} />
+                )}
+              </div>
+            </section>
           </>
         )}
       </DetailStates>
+
+      {order && resolving && (
+        <ResolveDialog order={order} onClose={() => setResolving(false)} />
+      )}
     </div>
   )
 }

@@ -17,11 +17,14 @@ export function DetailHeader({
   backLabel,
   title,
   badge,
+  actions,
 }: {
   backTo: string
   backLabel: string
   title: string
   badge?: ReactNode
+  /** Commands available on this case, pushed to the trailing edge. */
+  actions?: ReactNode
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -32,9 +35,10 @@ export function DetailHeader({
         <ArrowLeft className="size-3.5" aria-hidden />
         {backLabel}
       </Link>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
         {badge}
+        {actions && <div className="ms-auto flex items-center gap-2">{actions}</div>}
       </div>
     </div>
   )
