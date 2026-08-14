@@ -1,4 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { queryOptions, useQuery } from '@tanstack/react-query'
+import type { UseQueryResult } from '@tanstack/react-query'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -7,67 +9,162 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { listBalances } from '@/features/inventory/api'
+import { listOrders } from '@/features/orders/api'
+import { listReconRuns } from '@/features/payments/api'
 import { auth } from '@/lib/auth'
+import { formatMinor } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/_authenticated/')({
   component: DashboardPage,
 })
 
 /**
- * Dashboard skeleton. Attention cards (low stock, manual-review backlog,
- * payment discrepancies, recent orders) arrive with their owning services'
- * protected read slices — each card gets its own query key and error state,
- * and a failed domain never blanks the page (ADR-048). Until then the only
- * real data on this screen is the operator's own session.
+ * Attention cards (RFC-0023): every card is its own query key with its own
+ * loading/error state — one failed domain read never blanks the page and
+ * never fabricates a number (ADR-048).
  */
+const lowStockQuery = queryOptions({
+  queryKey: ['dashboard', 'low-stock'] as const,
+  queryFn: ({ signal }) => listBalances({ page: 1, page_size: 1, low_stock: true }, signal),
+})
+const manualReviewQuery = queryOptions({
+  queryKey: ['dashboard', 'manual-review'] as const,
+  queryFn: ({ signal }) => listOrders({ page: 1, page_size: 1, status: 'manual_review' }, signal),
+})
+const cancellingQuery = queryOptions({
+  queryKey: ['dashboard', 'cancelling'] as const,
+  queryFn: ({ signal }) => listOrders({ page: 1, page_size: 1, status: 'cancelling' }, signal),
+})
+const latestReconQuery = queryOptions({
+  queryKey: ['dashboard', 'recon'] as const,
+  queryFn: ({ signal }) => listReconRuns({ page: 1, page_size: 1 }, signal),
+})
+const recentOrdersQuery = queryOptions({
+  queryKey: ['dashboard', 'recent-orders'] as const,
+  queryFn: ({ signal }) => listOrders({ page: 1, page_size: 5 }, signal),
+})
+
+function AttentionCard({
+  title,
+  to,
+  query,
+  value,
+  alarmWhenPositive = true,
+}: {
+  title: string
+  to: string
+  query: UseQueryResult<unknown>
+  value: number | undefined
+  alarmWhenPositive?: boolean
+}) {
+  return (
+    <Link
+      to={to}
+      className="rounded-xl border bg-card p-4 shadow-sm transition-colors hover:bg-accent/50 focus-visible:outline-2"
+    >
+      <p className="text-sm font-medium text-muted-foreground">{title}</p>
+      {query.isPending ? (
+        <Skeleton className="mt-2 h-7 w-12" />
+      ) : query.isError ? (
+        <p className="mt-2 text-sm text-destructive">unavailable</p>
+      ) : (
+        <p
+          className={cn(
+            'mt-1 text-2xl font-semibold tabular-nums',
+            alarmWhenPositive && (value ?? 0) > 0 && 'text-destructive',
+          )}
+        >
+          {value}
+        </p>
+      )}
+    </Link>
+  )
+}
+
 function DashboardPage() {
-  const roles = auth.realmRoles()
+  const lowStock = useQuery(lowStockQuery)
+  const manualReview = useQuery(manualReviewQuery)
+  const cancelling = useQuery(cancellingQuery)
+  const recon = useQuery(latestReconQuery)
+  const recent = useQuery(recentOrdersQuery)
+
+  const latestRun = recon.data?.items?.[0]
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          Business operations across the duynhlab platform.
+          Signed in as <span className="font-medium text-foreground">{auth.username()}</span> —
+          every number below is a live read from its owning service.
         </p>
       </div>
 
-      <Card className="max-w-md">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <AttentionCard
+          title="Low / out of stock"
+          to="/inventory"
+          query={lowStock}
+          value={lowStock.data?.total_items}
+        />
+        <AttentionCard
+          title="Manual review"
+          to="/orders"
+          query={manualReview}
+          value={manualReview.data?.total_items}
+        />
+        <AttentionCard
+          title="Cancelling"
+          to="/orders"
+          query={cancelling}
+          value={cancelling.data?.total_items}
+        />
+        <AttentionCard
+          title="Recon discrepancies (latest run)"
+          to="/payments"
+          query={recon}
+          value={latestRun ? latestRun.discrepancies_found : 0}
+        />
+      </div>
+
+      <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Session</CardTitle>
-          <CardDescription>
-            Verified by Keycloak; services re-check every request.
-          </CardDescription>
+          <CardTitle className="text-sm font-medium">Recent orders</CardTitle>
+          <CardDescription>The five newest orders across all customers.</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-sm text-muted-foreground">Operator</span>
-            <span className="text-sm font-medium">{auth.username() ?? '—'}</span>
-          </div>
-          <div className="flex items-start justify-between gap-4">
-            <span className="text-sm text-muted-foreground">Realm roles</span>
-            <span className="flex flex-wrap justify-end gap-1">
-              {roles.map((role) => (
-                <Badge
-                  key={role}
-                  variant={role === 'backoffice_admin' ? 'default' : 'secondary'}
-                >
-                  {role}
-                </Badge>
+        <CardContent>
+          {recent.isPending ? (
+            <Skeleton className="h-24 w-full" />
+          ) : recent.isError ? (
+            <p className="text-sm text-destructive">Order service unavailable — other cards stay live.</p>
+          ) : recent.data.items.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No orders yet.</p>
+          ) : (
+            <ul className="flex flex-col divide-y">
+              {recent.data.items.map((o) => (
+                <li key={o.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <span className="flex items-center gap-2">
+                    <span className="font-medium">#{o.id}</span>
+                    <Badge
+                      variant={
+                        o.status === 'manual_review' || o.status === 'cancelling'
+                          ? 'destructive'
+                          : 'secondary'
+                      }
+                    >
+                      {o.status}
+                    </Badge>
+                  </span>
+                  <span className="tabular-nums text-muted-foreground">{formatMinor(o.total)}</span>
+                </li>
               ))}
-            </span>
-          </div>
+            </ul>
+          )}
         </CardContent>
       </Card>
-
-      <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed bg-card px-6 py-12 text-center">
-        <p className="text-sm font-medium">Attention cards land with their API slices</p>
-        <p className="max-w-md text-sm text-muted-foreground">
-          Low/out-of-stock, manual-review and cancelling backlogs, payment
-          discrepancies, and recent orders appear here as each owning service
-          ships its protected reads — real data only, no placeholders.
-        </p>
-      </div>
     </div>
   )
 }
