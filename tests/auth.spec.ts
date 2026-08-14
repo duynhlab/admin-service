@@ -42,9 +42,10 @@ test('operator logs in, sees the shell, and logs out', async ({ page }) => {
     await expect(nav.getByRole('link', { name: item })).toBeVisible()
   }
 
-  // Sections without a backend slice say so — never placeholder data.
+  // Catalog is live since slice B: the operator table shows lifecycle state.
   await nav.getByRole('link', { name: 'Catalog' }).click()
-  await expect(page.getByText('Waiting for its API slice')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Catalog' })).toBeVisible()
+  await expect(page.getByRole('columnheader', { name: 'Status' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Sign out' }).click()
   await page.waitForURL(/\/login/)
