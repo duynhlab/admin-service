@@ -119,3 +119,52 @@ test('categories list and accept a new entry', async ({ page }) => {
   // There is no delete action anywhere — deleting would uncategorize products.
   await expect(page.getByRole('button', { name: /delete/i })).toHaveCount(0)
 })
+
+test('product case view shows the audit trail the service records', async ({ page }) => {
+  await loginAsOperator(page)
+  await openCatalog(page)
+  const name = uniqueName()
+
+  // Make a history worth reading: create, then publish, then edit.
+  await page.getByRole('button', { name: 'New product' }).click()
+  await page.getByLabel('Name').fill(name)
+  await page.getByLabel('Price').fill('11')
+  await page.getByRole('button', { name: 'Create draft' }).click()
+
+  const row = page.getByRole('row').filter({ hasText: name })
+  await expect(row).toBeVisible()
+  await row.getByRole('button', { name: 'publish' }).click()
+  await page.getByRole('button', { name: 'Publish', exact: true }).click()
+  await expect(row.getByText('ACTIVE')).toBeVisible()
+
+  await row.getByRole('button', { name: 'Edit' }).click()
+  await page.getByLabel('Price').fill('13.5')
+  await page.getByLabel(/Reason/).fill('e2e price move')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+
+  // Drill into the case view from the id link.
+  await row.getByRole('link').first().click()
+  await expect(page.getByRole('heading', { name })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Change history' })).toBeVisible()
+
+  // Scope to the UPDATE entry itself: the price 11 appears twice on this page
+  // (the value CREATE recorded, and the `before` side of the edit), so a
+  // page-wide match would be ambiguous — the entry is the unit of meaning.
+  const updateEntry = page.getByRole('listitem').filter({ hasText: 'UPDATE' })
+  await expect(updateEntry).toHaveCount(1)
+  await expect(updateEntry.getByText('e2e price move')).toBeVisible()
+  await expect(updateEntry.getByText(/v2 → v3/)).toBeVisible()
+  await expect(updateEntry.getByText('11', { exact: true })).toBeVisible()
+  await expect(updateEntry.getByText('13.5', { exact: true })).toBeVisible()
+  // The arrow is decorative; the transition is announced in words.
+  await expect(updateEntry.getByText('changed to').first()).toBeAttached()
+
+  // And the whole lifecycle is there, oldest last.
+  for (const action of ['PUBLISH', 'CREATE']) {
+    await expect(page.getByText(action, { exact: true })).toBeVisible()
+  }
+
+  // The actor is the operator's staff subject — never a body-supplied value.
+  await expect(page.getByText('d0e00000-0000-4000-8000-000000000001').first()).toBeVisible()
+})
