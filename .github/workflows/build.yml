@@ -46,6 +46,20 @@ jobs:
       image-name: '${{ github.event.repository.name }}'
       push: true
       sbom: true
+      # CLUSTER CONTRACT. The portal is a static bundle: its edge origin, realm,
+      # and client are baked at build time (Dockerfile ARG -> VITE_*), so the
+      # published image — not a runtime env var — decides which platform it
+      # talks to. The in-code defaults are the LOCAL dev ones (localhost:8080 /
+      # :8081); an image built without these args points a cluster deployment
+      # at the developer's laptop and fails only in the browser, long after the
+      # rollout reports healthy. These four values are part of the release and
+      # must match the cluster edge host, the ADR-050 staff realm, and its
+      # portal client.
+      build-args: |
+        API_BASE_URL=https://gateway.duynh.me
+        KEYCLOAK_URL=https://id.duynh.me
+        KEYCLOAK_REALM=duynhlab-staff
+        KEYCLOAK_CLIENT_ID=admin-portal
       # Sortable tag for Flux image automation, alongside the immutable sha-
       # tag; a v* tag push emits X.Y.Z and X.Y (leading v stripped) — same
       # behavior as the customer SPA and the Go services.
