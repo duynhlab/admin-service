@@ -34,11 +34,19 @@ test('catalog lists real products with their lifecycle state', async ({ page }) 
   // The operator table exposes what the public catalog cannot: status + version.
   await expect(page.getByRole('columnheader', { name: 'Status' })).toBeVisible()
   await expect(page.getByRole('columnheader', { name: 'Ver' })).toBeVisible()
-  await expect(page.getByRole('table').getByRole('cell', { name: 'ACTIVE' }).first()).toBeVisible()
 
-  // The status filter is URL state, like every other list in the portal.
-  await page.getByRole('group', { name: 'Status filter' }).getByRole('button', { name: 'DRAFT' }).click()
-  await expect(page).toHaveURL(/status=DRAFT/)
+  // Assert through the FILTER, not through page 1. The list is newest-first, so
+  // on a stack where the audit has just created a page's worth of drafts there
+  // is legitimately no ACTIVE row on the first page — asserting on page 1
+  // content would make this spec depend on how much traffic ran before it.
+  const chips = page.getByRole('group', { name: 'Status filter' })
+  for (const status of ['ACTIVE', 'DRAFT'] as const) {
+    await chips.getByRole('button', { name: status }).click()
+    await expect(page).toHaveURL(new RegExp(`status=${status}`))
+    await expect(
+      page.getByRole('table').getByRole('cell', { name: status }).first(),
+    ).toBeVisible()
+  }
 })
 
 test('lifecycle round-trip: create a draft, publish it, archive it', async ({ page }) => {
