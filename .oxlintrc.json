@@ -18,7 +18,8 @@
     {
       "files": [
         "src/routes/**",
-        "src/components/**"
+        "src/components/**",
+        "src/lib/format.tsx"
       ],
       "rules": {
         "react/only-export-components": "off"
