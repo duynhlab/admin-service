@@ -19,6 +19,7 @@ import { Route as AuthenticatedInventoryRouteImport } from './routes/_authentica
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
 import { Route as AuthenticatedShipmentsRouteImport } from './routes/_authenticated/shipments'
+import { Route as AuthenticatedCatalogProductIdRouteImport } from './routes/_authenticated/catalog_.$productId'
 import { Route as AuthenticatedCustomersUserIdRouteImport } from './routes/_authenticated/customers_.$userId'
 import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders_.$orderId'
 import { Route as AuthenticatedPaymentsPaymentIdRouteImport } from './routes/_authenticated/payments_.$paymentId'
@@ -74,6 +75,12 @@ const AuthenticatedShipmentsRoute = AuthenticatedShipmentsRouteImport.update({
   path: '/shipments',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedCatalogProductIdRoute =
+  AuthenticatedCatalogProductIdRouteImport.update({
+    id: '/catalog_/$productId',
+    path: '/catalog/$productId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCustomersUserIdRoute =
   AuthenticatedCustomersUserIdRouteImport.update({
     id: '/customers_/$userId',
@@ -115,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/orders': typeof AuthenticatedOrdersRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/shipments': typeof AuthenticatedShipmentsRoute
+  '/catalog/$productId': typeof AuthenticatedCatalogProductIdRoute
   '/customers/$userId': typeof AuthenticatedCustomersUserIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/payments/$paymentId': typeof AuthenticatedPaymentsPaymentIdRoute
@@ -131,6 +139,7 @@ export interface FileRoutesByTo {
   '/payments': typeof AuthenticatedPaymentsRoute
   '/shipments': typeof AuthenticatedShipmentsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/catalog/$productId': typeof AuthenticatedCatalogProductIdRoute
   '/customers/$userId': typeof AuthenticatedCustomersUserIdRoute
   '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/payments/$paymentId': typeof AuthenticatedPaymentsPaymentIdRoute
@@ -149,6 +158,7 @@ export interface FileRoutesById {
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
   '/_authenticated/shipments': typeof AuthenticatedShipmentsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/catalog_/$productId': typeof AuthenticatedCatalogProductIdRoute
   '/_authenticated/customers_/$userId': typeof AuthenticatedCustomersUserIdRoute
   '/_authenticated/orders_/$orderId': typeof AuthenticatedOrdersOrderIdRoute
   '/_authenticated/payments_/$paymentId': typeof AuthenticatedPaymentsPaymentIdRoute
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/payments'
     | '/shipments'
+    | '/catalog/$productId'
     | '/customers/$userId'
     | '/orders/$orderId'
     | '/payments/$paymentId'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/shipments'
     | '/'
+    | '/catalog/$productId'
     | '/customers/$userId'
     | '/orders/$orderId'
     | '/payments/$paymentId'
@@ -200,6 +212,7 @@ export interface FileRouteTypes {
     | '/_authenticated/payments'
     | '/_authenticated/shipments'
     | '/_authenticated/'
+    | '/_authenticated/catalog_/$productId'
     | '/_authenticated/customers_/$userId'
     | '/_authenticated/orders_/$orderId'
     | '/_authenticated/payments_/$paymentId'
@@ -285,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedShipmentsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/catalog_/$productId': {
+      id: '/_authenticated/catalog_/$productId'
+      path: '/catalog/$productId'
+      fullPath: '/catalog/$productId'
+      preLoaderRoute: typeof AuthenticatedCatalogProductIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/customers_/$userId': {
       id: '/_authenticated/customers_/$userId'
       path: '/customers/$userId'
@@ -331,6 +351,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
   AuthenticatedShipmentsRoute: typeof AuthenticatedShipmentsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedCatalogProductIdRoute: typeof AuthenticatedCatalogProductIdRoute
   AuthenticatedCustomersUserIdRoute: typeof AuthenticatedCustomersUserIdRoute
   AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
   AuthenticatedPaymentsPaymentIdRoute: typeof AuthenticatedPaymentsPaymentIdRoute
@@ -346,6 +367,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
   AuthenticatedShipmentsRoute: AuthenticatedShipmentsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedCatalogProductIdRoute: AuthenticatedCatalogProductIdRoute,
   AuthenticatedCustomersUserIdRoute: AuthenticatedCustomersUserIdRoute,
   AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
   AuthenticatedPaymentsPaymentIdRoute: AuthenticatedPaymentsPaymentIdRoute,

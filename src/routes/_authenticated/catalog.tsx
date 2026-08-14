@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { queryOptions, useQuery } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import type { PaginationState, Updater } from '@tanstack/react-table'
@@ -130,7 +130,18 @@ function ProductsView({ pagination, onPaginationChange }: {
   const [transition, setTransition] = useState<{ product: CatalogProduct; action: LifecycleAction } | null>(null)
 
   const columns = prodCol.columns([
-    prodCol.accessor('id', { header: 'ID' }),
+    prodCol.accessor('id', {
+      header: 'ID',
+      cell: (i) => (
+        <Link
+          to="/catalog/$productId"
+          params={{ productId: i.getValue() }}
+          className="font-medium underline-offset-2 hover:underline"
+        >
+          #{i.getValue()}
+        </Link>
+      ),
+    }),
     prodCol.accessor('name', { header: 'Name' }),
     prodCol.accessor('status', {
       header: 'Status',
