@@ -25,7 +25,9 @@ test('operator logs in, sees the shell, and logs out', async ({ page }) => {
   await loginViaKeycloak(page, 'duyne', 'p@ss1234')
 
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
-  await expect(page.getByText('backoffice_admin')).toBeVisible()
+  const sidebar = page.getByRole('complementary')
+  await expect(sidebar.getByText('duyne', { exact: true })).toBeVisible()
+  await expect(sidebar.getByText('Operator', { exact: true })).toBeVisible()
 
   const nav = page.getByRole('navigation', { name: 'Primary' })
   for (const item of [
