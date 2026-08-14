@@ -78,6 +78,20 @@ export function getPaymentCase(id: number, signal?: AbortSignal) {
   )
 }
 
+/**
+ * The doubt worklist: attempts still UNKNOWN and unresolved across all
+ * customers. Read-only — the reconciler owns resolving them.
+ */
+export function listOpenAttempts(
+  q: { page: number; page_size: number },
+  signal?: AbortSignal,
+) {
+  return apiFetch<Paginated<PaymentAttempt>>('/payment/v1/protected/attempts/open', {
+    query: { page: q.page, page_size: q.page_size },
+    signal,
+  })
+}
+
 export function listReconRuns(q: { page: number; page_size: number }, signal?: AbortSignal) {
   return apiFetch<Paginated<ReconRun>>('/payment/v1/protected/reconciliations/runs', {
     query: { page: q.page, page_size: q.page_size },

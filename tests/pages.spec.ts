@@ -59,6 +59,17 @@ test('case views: order, payment (attempts + ledger), shipment, customer', async
   await expect(page.getByText('Address', { exact: true })).toBeVisible()
 })
 
+test('open-attempt worklist: dashboard card links into the attempts tab', async ({ page }) => {
+  await loginAsOperator(page)
+  await page.getByRole('link', { name: /Unresolved attempts/ }).click()
+  await expect(page).toHaveURL(/view=attempts/)
+  await expect(page.getByRole('columnheader', { name: 'Outcome' })).toBeVisible()
+  // Real read: either rows from the worklist, or the honest empty state.
+  await expect(
+    page.getByRole('table').getByRole('link').first().or(page.getByText('No unresolved attempts')),
+  ).toBeVisible()
+})
+
 test('recon run detail lists its discrepancies table', async ({ page }) => {
   await loginAsOperator(page)
   await page.goto('/payments?view=reconciliation')

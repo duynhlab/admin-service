@@ -5,14 +5,14 @@ import type { PaginationState, Updater } from '@tanstack/react-table'
 import { z } from 'zod'
 import { Badge } from '@/components/ui/badge'
 import { DataTable, dataTableFeatures } from '@/components/data-table'
-import { listPayments, listReconRuns, PAYMENT_STATUSES } from '@/features/payments/api'
-import type { Payment, PaymentStatus, ReconRun } from '@/features/payments/api'
+import { listOpenAttempts, listPayments, listReconRuns, PAYMENT_STATUSES } from '@/features/payments/api'
+import type { Payment, PaymentAttempt, PaymentStatus, ReconRun } from '@/features/payments/api'
 import { ApiError } from '@/lib/api'
 import { formatMinor, StatusChips } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 const searchSchema = z.object({
-  view: z.enum(['payments', 'reconciliation']).catch('payments'),
+  view: z.enum(['payments', 'attempts', 'reconciliation']).catch('payments'),
   page: z.coerce.number().int().min(1).catch(1),
   page_size: z.coerce.number().int().min(1).max(100).catch(20),
   status: z.enum(PAYMENT_STATUSES).optional().catch(undefined),
@@ -29,8 +29,15 @@ export const paymentsQuery = (q: { page: number; page_size: number; status?: Pay
 export const reconRunsQuery = (q: { page: number; page_size: number }) =>
   queryOptions({ queryKey: ['payments', 'recon', q] as const, queryFn: ({ signal }) => listReconRuns(q, signal) })
 
+export const openAttemptsQuery = (q: { page: number; page_size: number }) =>
+  queryOptions({
+    queryKey: ['payments', 'open-attempts', q] as const,
+    queryFn: ({ signal }) => listOpenAttempts(q, signal),
+  })
+
 const payCol = createColumnHelper<typeof dataTableFeatures, Payment>()
 const runCol = createColumnHelper<typeof dataTableFeatures, ReconRun>()
+const attCol = createColumnHelper<typeof dataTableFeatures, PaymentAttempt>()
 
 const payVariant = (s: PaymentStatus) =>
   s === 'failed' || s === 'expired' ? 'destructive'
@@ -50,7 +57,7 @@ function PaymentsPage() {
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold tracking-tight">Payments</h1>
       <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Payment views">
-        {(['payments', 'reconciliation'] as const).map((view) => (
+        {(['payments', 'attempts', 'reconciliation'] as const).map((view) => (
           <button
             key={view}
             role="tab"
@@ -69,6 +76,8 @@ function PaymentsPage() {
       </div>
       {search.view === 'payments' ? (
         <PaymentsView pagination={pagination} onPaginationChange={onPaginationChange} />
+      ) : search.view === 'attempts' ? (
+        <OpenAttemptsView pagination={pagination} onPaginationChange={onPaginationChange} />
       ) : (
         <ReconView pagination={pagination} onPaginationChange={onPaginationChange} />
       )}
@@ -130,6 +139,64 @@ function PaymentsView({ pagination, onPaginationChange }: {
         error={query.error instanceof ApiError ? query.error : null}
         onRetry={() => void query.refetch()}
         emptyMessage="No payments in this state."
+      />
+    </div>
+  )
+}
+
+/**
+ * The doubt worklist. Every row is a provider round-trip whose answer never
+ * arrived, so the money effect may or may not have landed — the reconciler
+ * resolves them, and this is the backlog it has not reached yet.
+ */
+function OpenAttemptsView({ pagination, onPaginationChange }: {
+  pagination: PaginationState
+  onPaginationChange: (u: Updater<PaginationState>) => void
+}) {
+  const search = Route.useSearch()
+  const query = useQuery(openAttemptsQuery({ page: search.page, page_size: search.page_size }))
+
+  const columns = attCol.columns([
+    attCol.accessor('ID', { header: 'Attempt' }),
+    attCol.accessor('PaymentID', {
+      header: 'Payment',
+      cell: (i) => (
+        <Link
+          to="/payments/$paymentId"
+          params={{ paymentId: String(i.getValue()) }}
+          className="font-medium underline-offset-2 hover:underline"
+        >
+          #{i.getValue()}
+        </Link>
+      ),
+    }),
+    attCol.accessor('Operation', { header: 'Operation' }),
+    attCol.accessor('Outcome', {
+      header: 'Outcome',
+      cell: (i) => <Badge variant="destructive">{i.getValue()}</Badge>,
+    }),
+    attCol.accessor('ProviderRef', {
+      header: 'Provider ref',
+      cell: (i) => <span className="font-mono text-xs">{i.getValue() || '—'}</span>,
+    }),
+  ])
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-muted-foreground">
+        Unresolved round-trips across all customers. Read-only: the reconciler
+        settles them against the provider — nothing here moves money.
+      </p>
+      <DataTable
+        columns={columns}
+        data={query.data?.items ?? []}
+        rowCount={query.data?.total_items}
+        pagination={pagination}
+        onPaginationChange={onPaginationChange}
+        isLoading={query.isPending}
+        error={query.error instanceof ApiError ? query.error : null}
+        onRetry={() => void query.refetch()}
+        emptyMessage="No unresolved attempts — every provider round-trip has an answer."
       />
     </div>
   )
