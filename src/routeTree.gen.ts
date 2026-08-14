@@ -19,6 +19,11 @@ import { Route as AuthenticatedInventoryRouteImport } from './routes/_authentica
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
 import { Route as AuthenticatedShipmentsRouteImport } from './routes/_authenticated/shipments'
+import { Route as AuthenticatedCustomersUserIdRouteImport } from './routes/_authenticated/customers_.$userId'
+import { Route as AuthenticatedOrdersOrderIdRouteImport } from './routes/_authenticated/orders_.$orderId'
+import { Route as AuthenticatedPaymentsPaymentIdRouteImport } from './routes/_authenticated/payments_.$paymentId'
+import { Route as AuthenticatedShipmentsShipmentIdRouteImport } from './routes/_authenticated/shipments_.$shipmentId'
+import { Route as AuthenticatedPaymentsRunsRunIdRouteImport } from './routes/_authenticated/payments_.runs.$runId'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -69,6 +74,36 @@ const AuthenticatedShipmentsRoute = AuthenticatedShipmentsRouteImport.update({
   path: '/shipments',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedCustomersUserIdRoute =
+  AuthenticatedCustomersUserIdRouteImport.update({
+    id: '/customers_/$userId',
+    path: '/customers/$userId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedOrdersOrderIdRoute =
+  AuthenticatedOrdersOrderIdRouteImport.update({
+    id: '/orders_/$orderId',
+    path: '/orders/$orderId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPaymentsPaymentIdRoute =
+  AuthenticatedPaymentsPaymentIdRouteImport.update({
+    id: '/payments_/$paymentId',
+    path: '/payments/$paymentId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedShipmentsShipmentIdRoute =
+  AuthenticatedShipmentsShipmentIdRouteImport.update({
+    id: '/shipments_/$shipmentId',
+    path: '/shipments/$shipmentId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPaymentsRunsRunIdRoute =
+  AuthenticatedPaymentsRunsRunIdRouteImport.update({
+    id: '/payments_/runs/$runId',
+    path: '/payments/runs/$runId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -80,6 +115,11 @@ export interface FileRoutesByFullPath {
   '/orders': typeof AuthenticatedOrdersRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/shipments': typeof AuthenticatedShipmentsRoute
+  '/customers/$userId': typeof AuthenticatedCustomersUserIdRoute
+  '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
+  '/payments/$paymentId': typeof AuthenticatedPaymentsPaymentIdRoute
+  '/shipments/$shipmentId': typeof AuthenticatedShipmentsShipmentIdRoute
+  '/payments/runs/$runId': typeof AuthenticatedPaymentsRunsRunIdRoute
 }
 export interface FileRoutesByTo {
   '/forbidden': typeof ForbiddenRoute
@@ -91,6 +131,11 @@ export interface FileRoutesByTo {
   '/payments': typeof AuthenticatedPaymentsRoute
   '/shipments': typeof AuthenticatedShipmentsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/customers/$userId': typeof AuthenticatedCustomersUserIdRoute
+  '/orders/$orderId': typeof AuthenticatedOrdersOrderIdRoute
+  '/payments/$paymentId': typeof AuthenticatedPaymentsPaymentIdRoute
+  '/shipments/$shipmentId': typeof AuthenticatedShipmentsShipmentIdRoute
+  '/payments/runs/$runId': typeof AuthenticatedPaymentsRunsRunIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -104,6 +149,11 @@ export interface FileRoutesById {
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
   '/_authenticated/shipments': typeof AuthenticatedShipmentsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/customers_/$userId': typeof AuthenticatedCustomersUserIdRoute
+  '/_authenticated/orders_/$orderId': typeof AuthenticatedOrdersOrderIdRoute
+  '/_authenticated/payments_/$paymentId': typeof AuthenticatedPaymentsPaymentIdRoute
+  '/_authenticated/shipments_/$shipmentId': typeof AuthenticatedShipmentsShipmentIdRoute
+  '/_authenticated/payments_/runs/$runId': typeof AuthenticatedPaymentsRunsRunIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,6 +167,11 @@ export interface FileRouteTypes {
     | '/orders'
     | '/payments'
     | '/shipments'
+    | '/customers/$userId'
+    | '/orders/$orderId'
+    | '/payments/$paymentId'
+    | '/shipments/$shipmentId'
+    | '/payments/runs/$runId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forbidden'
@@ -128,6 +183,11 @@ export interface FileRouteTypes {
     | '/payments'
     | '/shipments'
     | '/'
+    | '/customers/$userId'
+    | '/orders/$orderId'
+    | '/payments/$paymentId'
+    | '/shipments/$shipmentId'
+    | '/payments/runs/$runId'
   id:
     | '__root__'
     | '/_authenticated'
@@ -140,6 +200,11 @@ export interface FileRouteTypes {
     | '/_authenticated/payments'
     | '/_authenticated/shipments'
     | '/_authenticated/'
+    | '/_authenticated/customers_/$userId'
+    | '/_authenticated/orders_/$orderId'
+    | '/_authenticated/payments_/$paymentId'
+    | '/_authenticated/shipments_/$shipmentId'
+    | '/_authenticated/payments_/runs/$runId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -220,6 +285,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedShipmentsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/customers_/$userId': {
+      id: '/_authenticated/customers_/$userId'
+      path: '/customers/$userId'
+      fullPath: '/customers/$userId'
+      preLoaderRoute: typeof AuthenticatedCustomersUserIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/orders_/$orderId': {
+      id: '/_authenticated/orders_/$orderId'
+      path: '/orders/$orderId'
+      fullPath: '/orders/$orderId'
+      preLoaderRoute: typeof AuthenticatedOrdersOrderIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/payments_/$paymentId': {
+      id: '/_authenticated/payments_/$paymentId'
+      path: '/payments/$paymentId'
+      fullPath: '/payments/$paymentId'
+      preLoaderRoute: typeof AuthenticatedPaymentsPaymentIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/shipments_/$shipmentId': {
+      id: '/_authenticated/shipments_/$shipmentId'
+      path: '/shipments/$shipmentId'
+      fullPath: '/shipments/$shipmentId'
+      preLoaderRoute: typeof AuthenticatedShipmentsShipmentIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/payments_/runs/$runId': {
+      id: '/_authenticated/payments_/runs/$runId'
+      path: '/payments/runs/$runId'
+      fullPath: '/payments/runs/$runId'
+      preLoaderRoute: typeof AuthenticatedPaymentsRunsRunIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -231,6 +331,11 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
   AuthenticatedShipmentsRoute: typeof AuthenticatedShipmentsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedCustomersUserIdRoute: typeof AuthenticatedCustomersUserIdRoute
+  AuthenticatedOrdersOrderIdRoute: typeof AuthenticatedOrdersOrderIdRoute
+  AuthenticatedPaymentsPaymentIdRoute: typeof AuthenticatedPaymentsPaymentIdRoute
+  AuthenticatedShipmentsShipmentIdRoute: typeof AuthenticatedShipmentsShipmentIdRoute
+  AuthenticatedPaymentsRunsRunIdRoute: typeof AuthenticatedPaymentsRunsRunIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -241,6 +346,11 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
   AuthenticatedShipmentsRoute: AuthenticatedShipmentsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedCustomersUserIdRoute: AuthenticatedCustomersUserIdRoute,
+  AuthenticatedOrdersOrderIdRoute: AuthenticatedOrdersOrderIdRoute,
+  AuthenticatedPaymentsPaymentIdRoute: AuthenticatedPaymentsPaymentIdRoute,
+  AuthenticatedShipmentsShipmentIdRoute: AuthenticatedShipmentsShipmentIdRoute,
+  AuthenticatedPaymentsRunsRunIdRoute: AuthenticatedPaymentsRunsRunIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
