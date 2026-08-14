@@ -12,7 +12,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { listBalances } from '@/features/inventory/api'
 import { listOrders } from '@/features/orders/api'
-import { listReconRuns } from '@/features/payments/api'
+import { listOpenAttempts, listReconRuns } from '@/features/payments/api'
 import { auth } from '@/lib/auth'
 import { formatMinor } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -38,6 +38,10 @@ const cancellingQuery = queryOptions({
   queryKey: ['dashboard', 'cancelling'] as const,
   queryFn: ({ signal }) => listOrders({ page: 1, page_size: 1, status: 'cancelling' }, signal),
 })
+const openAttemptsQuery = queryOptions({
+  queryKey: ['dashboard', 'open-attempts'] as const,
+  queryFn: ({ signal }) => listOpenAttempts({ page: 1, page_size: 1 }, signal),
+})
 const latestReconQuery = queryOptions({
   queryKey: ['dashboard', 'recon'] as const,
   queryFn: ({ signal }) => listReconRuns({ page: 1, page_size: 1 }, signal),
@@ -50,12 +54,15 @@ const recentOrdersQuery = queryOptions({
 function AttentionCard({
   title,
   to,
+  search,
   query,
   value,
   alarmWhenPositive = true,
 }: {
   title: string
   to: string
+  /** Landing view on the target page, e.g. the payments page's tab. */
+  search?: Record<string, string>
   query: UseQueryResult<unknown>
   value: number | undefined
   alarmWhenPositive?: boolean
@@ -63,6 +70,7 @@ function AttentionCard({
   return (
     <Link
       to={to}
+      search={search}
       className="rounded-xl border bg-card p-4 shadow-sm transition-colors hover:bg-accent/50 focus-visible:outline-2"
     >
       <p className="text-sm font-medium text-muted-foreground">{title}</p>
@@ -88,6 +96,7 @@ function DashboardPage() {
   const lowStock = useQuery(lowStockQuery)
   const manualReview = useQuery(manualReviewQuery)
   const cancelling = useQuery(cancellingQuery)
+  const openAttempts = useQuery(openAttemptsQuery)
   const recon = useQuery(latestReconQuery)
   const recent = useQuery(recentOrdersQuery)
 
@@ -123,8 +132,16 @@ function DashboardPage() {
           value={cancelling.data?.total_items}
         />
         <AttentionCard
+          title="Unresolved attempts"
+          to="/payments"
+          search={{ view: 'attempts' }}
+          query={openAttempts}
+          value={openAttempts.data?.total_items}
+        />
+        <AttentionCard
           title="Recon discrepancies (latest run)"
           to="/payments"
+          search={{ view: 'reconciliation' }}
           query={recon}
           value={latestRun ? latestRun.discrepancies_found : 0}
         />
