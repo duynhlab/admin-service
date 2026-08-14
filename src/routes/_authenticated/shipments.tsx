@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { queryOptions, useQuery } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import type { PaginationState, Updater } from '@tanstack/react-table'
@@ -38,7 +38,18 @@ function ShipmentsPage() {
   }
 
   const columns = col.columns([
-    col.accessor('id', { header: 'Shipment' }),
+    col.accessor('id', {
+      header: 'Shipment',
+      cell: (i) => (
+        <Link
+          to="/shipments/$shipmentId"
+          params={{ shipmentId: String(i.getValue()) }}
+          className="font-medium underline-offset-2 hover:underline"
+        >
+          #{i.getValue()}
+        </Link>
+      ),
+    }),
     col.accessor('order_id', { header: 'Order' }),
     col.accessor('tracking_number', {
       header: 'Tracking',

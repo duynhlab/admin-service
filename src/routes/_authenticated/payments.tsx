@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { queryOptions, useQuery } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import type { PaginationState, Updater } from '@tanstack/react-table'
@@ -85,7 +85,18 @@ function PaymentsView({ pagination, onPaginationChange }: {
   const query = useQuery(paymentsQuery({ page: search.page, page_size: search.page_size, status: search.status }))
 
   const columns = payCol.columns([
-    payCol.accessor('id', { header: 'Payment' }),
+    payCol.accessor('id', {
+      header: 'Payment',
+      cell: (i) => (
+        <Link
+          to="/payments/$paymentId"
+          params={{ paymentId: String(i.getValue()) }}
+          className="font-medium underline-offset-2 hover:underline"
+        >
+          #{i.getValue()}
+        </Link>
+      ),
+    }),
     payCol.accessor('user_id', {
       header: 'Customer',
       cell: (i) => <span className="font-mono text-xs text-muted-foreground">{i.getValue()}</span>,
@@ -132,7 +143,18 @@ function ReconView({ pagination, onPaginationChange }: {
   const query = useQuery(reconRunsQuery({ page: search.page, page_size: search.page_size }))
 
   const columns = runCol.columns([
-    runCol.accessor('id', { header: 'Run' }),
+    runCol.accessor('id', {
+      header: 'Run',
+      cell: (i) => (
+        <Link
+          to="/payments/runs/$runId"
+          params={{ runId: String(i.getValue()) }}
+          className="font-medium underline-offset-2 hover:underline"
+        >
+          #{i.getValue()}
+        </Link>
+      ),
+    }),
     runCol.accessor('status', {
       header: 'Status',
       cell: (i) => <Badge variant={i.getValue() === 'failed' ? 'destructive' : 'secondary'}>{i.getValue()}</Badge>,

@@ -84,3 +84,10 @@ export function listReconRuns(q: { page: number; page_size: number }, signal?: A
     signal,
   })
 }
+
+export function getReconRun(id: number, signal?: AbortSignal) {
+  return apiFetch<{ run: ReconRun; discrepancies: ReconDiscrepancy[] }>(
+    `/payment/v1/protected/reconciliations/runs/${id}`,
+    { signal },
+  )
+}

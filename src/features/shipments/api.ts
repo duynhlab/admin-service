@@ -16,6 +16,10 @@ export interface Shipment {
   created_at?: string
 }
 
+export function getShipment(id: number, signal?: AbortSignal) {
+  return apiFetch<Shipment>(`/shipping/v1/protected/shipments/${id}`, { signal })
+}
+
 export function listShipments(
   q: { page: number; page_size: number; status?: ShipmentStatus },
   signal?: AbortSignal,

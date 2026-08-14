@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { queryOptions, useQuery } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import type { PaginationState, Updater } from '@tanstack/react-table'
@@ -42,7 +42,15 @@ function CustomersPage() {
   const columns = col.columns([
     col.accessor('user_id', {
       header: 'Subject',
-      cell: (i) => <span className="font-mono text-xs text-muted-foreground">{i.getValue()}</span>,
+      cell: (i) => (
+        <Link
+          to="/customers/$userId"
+          params={{ userId: i.getValue() }}
+          className="font-mono text-xs underline-offset-2 hover:underline"
+        >
+          {i.getValue()}
+        </Link>
+      ),
     }),
     col.accessor('name', { header: 'Name', cell: (i) => i.getValue() || '—' }),
     col.accessor('phone', { header: 'Phone', cell: (i) => i.getValue() || '—' }),
