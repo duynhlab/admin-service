@@ -27,6 +27,7 @@
     --color-input: var(--input);
     --color-border: var(--border);
     --color-destructive: var(--destructive);
+    --color-destructive-on-tint: var(--destructive-on-tint);
     --color-accent-foreground: var(--accent-foreground);
     --color-accent: var(--accent);
     --color-muted-foreground: var(--muted-foreground);
@@ -66,6 +67,11 @@
     --accent: oklch(0.97 0 0);
     --accent-foreground: oklch(0.205 0 0);
     --destructive: oklch(0.577 0.245 27.325);
+    /* Destructive text ON a destructive tint (the attention badges). The base
+       token is tuned for a solid surface; on `bg-destructive/10` it lands at
+       3.98:1 for 12px text, under the 4.5:1 WCAG AA floor — which the compose
+       gate caught the first time an attention card had a non-zero count. */
+    --destructive-on-tint: oklch(0.45 0.2 27.325);
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
     --ring: oklch(0.62 0.07 222);
@@ -101,6 +107,8 @@
     --accent: oklch(0.269 0 0);
     --accent-foreground: oklch(0.985 0 0);
     --destructive: oklch(0.704 0.191 22.216);
+    /* Dark theme sits on a dark tint, so the text goes lighter, not darker. */
+    --destructive-on-tint: oklch(0.8 0.14 22.216);
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
     --ring: oklch(0.55 0.07 218);
