@@ -22,7 +22,7 @@ import {
 } from '@/features/catalog/api'
 import type { CatalogProduct, Category, LifecycleAction } from '@/features/catalog/api'
 import { catalogKeys } from '@/features/catalog/queries'
-import { ApiError } from '@/lib/api'
+import { commandErrorText } from '@/lib/command-error'
 
 /**
  * The slice-B catalog commands (RFC-0023). Conventions that matter:
@@ -35,21 +35,8 @@ import { ApiError } from '@/lib/api'
  *    and a duplicate reads as a conflict the operator can act on.
  */
 
-function commandErrorText(err: unknown): string {
-  if (err instanceof ApiError) {
-    switch (err.code) {
-      case 'VERSION_CONFLICT':
-        return 'Someone else changed this product since you opened it. Close, reload the row, and reapply your change.'
-      case 'INVALID_TRANSITION':
-        return `That lifecycle move is not available from this product's current state (${err.message}).`
-      case 'CONFLICT':
-        return `A record with that name already exists (${err.message}).`
-      default:
-        return `${err.message} (${err.code})`
-    }
-  }
-  return 'The command did not reach the service — nothing was changed.'
-}
+/** The catalog's subject for the shared command-error copy. */
+const productErrorText = (err: unknown) => commandErrorText(err, 'product')
 
 function issueText(err: unknown): string {
   if (typeof err === 'string') return err
@@ -113,7 +100,7 @@ export function ProductFormDialog({
       await queryClient.invalidateQueries({ queryKey: catalogKeys.all })
       onClose()
     },
-    onError: (err) => setError(commandErrorText(err)),
+    onError: (err) => setError(productErrorText(err)),
   })
 
   const form = useForm({
@@ -282,7 +269,7 @@ export function TransitionDialog({
       await queryClient.invalidateQueries({ queryKey: catalogKeys.all })
       onClose()
     },
-    onError: (err) => setError(commandErrorText(err)),
+    onError: (err) => setError(productErrorText(err)),
   })
 
   if (!product) return null
@@ -356,7 +343,7 @@ export function CategoryFormDialog({
       await queryClient.invalidateQueries({ queryKey: catalogKeys.all })
       onClose()
     },
-    onError: (err) => setError(commandErrorText(err)),
+    onError: (err) => setError(productErrorText(err)),
   })
 
   const form = useForm({
