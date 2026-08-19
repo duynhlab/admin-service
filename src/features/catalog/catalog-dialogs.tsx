@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,6 +20,8 @@ import {
   updateCategory,
   updateProduct,
 } from '@/features/catalog/api'
+import { skuTrackedQuery } from '@/features/inventory/queries'
+import { UntrackedSkuNotice } from '@/features/inventory/untracked-sku-notice'
 import type { CatalogProduct, Category, LifecycleAction } from '@/features/catalog/api'
 import { catalogKeys } from '@/features/catalog/queries'
 import { commandErrorText } from '@/lib/command-error'
@@ -261,6 +263,11 @@ export function TransitionDialog({
   const queryClient = useQueryClient()
   const [reason, setReason] = useState('')
   const [error, setError] = useState<string | null>(null)
+  // ADR-053 publish warning: a read-only balances lookup. Warn, never gate —
+  // on error or while pending nothing renders and Publish stays untouched.
+  const tracked = useQuery(
+    skuTrackedQuery(product?.id ?? '', !!product && action === 'publish'),
+  )
 
   const mutation = useMutation({
     mutationFn: () => transitionProduct(product!.id, action, reason || undefined),
@@ -285,6 +292,9 @@ export function TransitionDialog({
             {copy.body}
           </DialogDescription>
         </DialogHeader>
+        {action === 'publish' && tracked.data?.total_items === 0 ? (
+          <UntrackedSkuNotice skuId={product.id} />
+        ) : null}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="transition-reason">Reason (optional, recorded in the audit trail)</Label>
           <Input

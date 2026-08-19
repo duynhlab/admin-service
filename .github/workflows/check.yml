@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   pr-checks:
-    uses: duynhlab/gha-workflows/.github/workflows/pr-checks.yml@725eb66998f03be252de9b11ef4bb530e59b9dd7 # v1.0.2
+    uses: duynhlab/gha-workflows/.github/workflows/pr-checks.yml@e321897e5c28e7c861b9d8beb37614e1c5823f42 # main — align with checkout-service/frontend (ADR-053 train)
     with:
       slack_channel_id: "C0AD82A9A74"
     secrets:
@@ -47,7 +47,7 @@ jobs:
     # there and paints every deps PR red for no reason.
     if: always() && github.actor != 'dependabot[bot]'
     needs: [pr-checks, lint]
-    uses: duynhlab/gha-workflows/.github/workflows/status.yml@725eb66998f03be252de9b11ef4bb530e59b9dd7 # v1.0.2
+    uses: duynhlab/gha-workflows/.github/workflows/status.yml@e321897e5c28e7c861b9d8beb37614e1c5823f42 # main — align with checkout-service/frontend (ADR-053 train)
     with:
       slack_channel_id: "C0AD82A9A74"
       slack_thread_ts: ${{ needs.pr-checks.outputs.slack_thread_ts }}

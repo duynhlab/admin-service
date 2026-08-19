@@ -24,6 +24,23 @@ export const inventoryKeys = {
     [...inventoryKeys.all, 'reservations', q] as const,
 }
 
+/**
+ * "Does this SKU have any balance row?" — the read behind the ADR-053 publish
+ * warning and the bootstrap dialog's advisory line. Reuses the protected
+ * balances list (page_size 1; untracked ⇔ total_items === 0) because
+ * BatchGetAvailability is gRPC-only and unreachable from the browser.
+ * retry: false — the warning degrades silently when inventory is down;
+ * it must never delay or gate a publish.
+ */
+export const skuTrackedQuery = (skuId: string, enabled: boolean) =>
+  queryOptions({
+    queryKey: [...inventoryKeys.all, 'tracked', skuId] as const,
+    queryFn: ({ signal }) =>
+      listBalances({ page: 1, page_size: 1, sku_id: skuId }, signal),
+    enabled,
+    retry: false,
+  })
+
 export const balancesQuery = (q: BalanceListQuery) =>
   queryOptions({
     queryKey: inventoryKeys.balances(q),

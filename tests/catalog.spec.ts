@@ -69,6 +69,12 @@ test('lifecycle round-trip: create a draft, publish it, archive it', async ({ pa
   await expect(row.getByRole('button', { name: 'restore' })).toHaveCount(0)
 
   await row.getByRole('button', { name: 'publish' }).click()
+  // ADR-053: a fresh product is untracked by construction, so the publish
+  // dialog must WARN — and the warning must not gate: Publish stays enabled.
+  await expect(
+    page.getByText('No inventory balance row exists for SKU'),
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Publish', exact: true })).toBeEnabled()
   await page.getByRole('button', { name: 'Publish', exact: true }).click()
   await expect(row.getByText('ACTIVE')).toBeVisible()
   // An ACTIVE product cannot be published again, so the button is gone.
