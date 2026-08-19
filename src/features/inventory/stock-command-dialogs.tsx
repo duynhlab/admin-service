@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { adjustStock, receiveStock } from '@/features/inventory/api'
 import type { Balance } from '@/features/inventory/api'
-import { inventoryKeys } from '@/features/inventory/queries'
+import { inventoryKeys, skuTrackedQuery } from '@/features/inventory/queries'
 import { ApiError } from '@/lib/api'
 
 /**
@@ -190,6 +190,194 @@ const adjustmentSchema = z.object({
     .min(1, 'A reason is required for adjustments')
     .max(64, 'Reason must be 64 characters or fewer'),
 })
+
+const firstReceiptSchema = z.object({
+  sku_id: z
+    .string()
+    .min(1, 'Enter the SKU id (for catalog products this is the product id)')
+    .max(64, 'SKU id must be 64 characters or fewer'),
+  warehouse_id: z
+    .number('Enter a warehouse id')
+    .int('Warehouse id must be a whole number')
+    .positive('Warehouse id must be a positive integer'),
+  quantity: z
+    .number('Enter a quantity')
+    .int('Quantity must be a whole number')
+    .positive('Quantity must be a positive integer'),
+  reason: z.string().max(64, 'Reason must be 64 characters or fewer'),
+})
+
+/**
+ * The ADR-053 bootstrap affordance: receive FIRST stock for a SKU that has no
+ * balance row yet, which the row-scoped ReceiveStockDialog can never reach.
+ * sku_id and warehouse_id are free entry (warehouse 1 = WH-DEFAULT, the only
+ * seeded warehouse; there is no protected warehouses list to pick from). The
+ * lookup under the SKU field is ADVISORY — it says whether a row already
+ * exists, but it never disables submit: the receipt is idempotent and
+ * ON CONFLICT-safe either way.
+ */
+export function ReceiveFirstStockDialog({
+  initialSkuId,
+  onClose,
+}: {
+  initialSkuId?: string
+  onClose: () => void
+}) {
+  const { queryClient, commandId, outcome, setOutcome, error, setError } =
+    useCommandState()
+  const [skuForLookup, setSkuForLookup] = useState(initialSkuId ?? '')
+  const tracked = useQuery(skuTrackedQuery(skuForLookup, skuForLookup.length > 0))
+
+  const mutation = useMutation({
+    mutationFn: receiveStock,
+    onSuccess: async (result) => {
+      setError(null)
+      setOutcome(
+        result.applied
+          ? 'Stock received.'
+          : 'Already applied earlier (idempotent replay) — no double-count.',
+      )
+      await queryClient.invalidateQueries({ queryKey: inventoryKeys.all })
+    },
+    onError: (err) => setError(commandErrorText(err)),
+  })
+
+  const form = useForm({
+    defaultValues: {
+      sku_id: initialSkuId ?? '',
+      warehouse_id: 1,
+      quantity: 1,
+      reason: '',
+    },
+    validators: { onSubmit: firstReceiptSchema },
+    onSubmit: ({ value }) => {
+      mutation.mutate({
+        command_id: commandId,
+        sku_id: value.sku_id.trim(),
+        warehouse_id: Number(value.warehouse_id),
+        quantity: Number(value.quantity),
+        reason: value.reason || undefined,
+      })
+    },
+  })
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Receive first stock</DialogTitle>
+          <DialogDescription>
+            Bootstrap a SKU inventory does not track yet — this receipt creates
+            its balance row. For catalog products the SKU id is the product id.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault()
+            void form.handleSubmit()
+          }}
+        >
+          <form.Field name="sku_id">
+            {(field) => (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="first-receive-sku">SKU id</Label>
+                <Input
+                  id="first-receive-sku"
+                  value={field.state.value}
+                  onChange={(e) => {
+                    field.handleChange(e.target.value)
+                    setSkuForLookup(e.target.value.trim())
+                  }}
+                />
+                {field.state.meta.errors.map((err, i) => (
+                  <p key={i} className="text-xs text-destructive">
+                    {issueText(err)}
+                  </p>
+                ))}
+                {/* Advisory only — absence of the line means the lookup did not
+                    answer, never that the SKU is tracked. */}
+                {tracked.data ? (
+                  <p className="text-xs text-muted-foreground">
+                    {tracked.data.total_items === 0
+                      ? 'No balance row yet — this receipt creates it.'
+                      : 'Already tracked — the balances table row action is the usual tool, but receiving here is safe.'}
+                  </p>
+                ) : null}
+              </div>
+            )}
+          </form.Field>
+          <form.Field name="warehouse_id">
+            {(field) => (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="first-receive-warehouse">
+                  Warehouse id (1 = WH-DEFAULT)
+                </Label>
+                <Input
+                  id="first-receive-warehouse"
+                  type="number"
+                  min={1}
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.valueAsNumber)}
+                />
+                {field.state.meta.errors.map((err, i) => (
+                  <p key={i} className="text-xs text-destructive">
+                    {issueText(err)}
+                  </p>
+                ))}
+              </div>
+            )}
+          </form.Field>
+          <form.Field name="quantity">
+            {(field) => (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="first-receive-quantity">Quantity to receive</Label>
+                <Input
+                  id="first-receive-quantity"
+                  type="number"
+                  min={1}
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.valueAsNumber)}
+                />
+                {field.state.meta.errors.map((err, i) => (
+                  <p key={i} className="text-xs text-destructive">
+                    {issueText(err)}
+                  </p>
+                ))}
+              </div>
+            )}
+          </form.Field>
+          <form.Field name="reason">
+            {(field) => (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="first-receive-reason">
+                  Reason (optional, e.g. PO number)
+                </Label>
+                <Input
+                  id="first-receive-reason"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+              </div>
+            )}
+          </form.Field>
+
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {outcome ? <p className="text-sm text-foreground">{outcome}</p> : null}
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              {outcome ? 'Close' : 'Cancel'}
+            </Button>
+            <Button type="submit" disabled={mutation.isPending || !!outcome}>
+              {mutation.isPending ? 'Receiving…' : 'Receive'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 export function AdjustStockDialog({ balance, onClose }: DialogProps) {
   const { queryClient, commandId, outcome, setOutcome, error, setError } =

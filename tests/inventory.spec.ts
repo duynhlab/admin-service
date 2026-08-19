@@ -73,3 +73,35 @@ test('receive command applies through the dialog and lands in the ledger', async
   await expect(ledgerRow.getByText('PW-E2E')).toBeVisible()
   await expect(ledgerRow.getByText('d0e00000-0000-4000-8000-000000000001')).toBeVisible()
 })
+
+test('first stock for an untracked SKU bootstraps its balance row (ADR-053)', async ({ page }) => {
+  await loginAsOperator(page)
+  await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Inventory' }).click()
+
+  // A SKU nothing has ever received against — untracked by construction.
+  const sku = `e2e-boot-${Date.now()}`
+
+  await page.getByRole('button', { name: 'Receive first stock' }).click()
+  await page.getByLabel('SKU id').fill(sku)
+  // The advisory lookup answers before submit: no row yet.
+  await expect(page.getByText('No balance row yet — this receipt creates it.')).toBeVisible()
+  await page.getByLabel(/Warehouse id/).fill('1')
+  await page.getByLabel('Quantity to receive').fill('4')
+  await page.getByLabel(/Reason/).fill('PW-BOOTSTRAP')
+  await page.getByRole('button', { name: 'Receive', exact: true }).click()
+  await expect(page.getByText('Stock received.')).toBeVisible()
+  await page.getByRole('button', { name: 'Close' }).first().click()
+
+  // The row now exists — the whole point of the affordance.
+  await page.getByLabel('Filter by SKU').fill(sku)
+  await page.getByRole('button', { name: 'Filter' }).click()
+  const row = page.getByRole('table').getByRole('row').nth(1)
+  await expect(row.getByText(sku)).toBeVisible()
+  await expect(row.getByRole('cell').nth(2)).toHaveText('4')
+
+  // And the ledger carries the RECEIVE with the operator's subject.
+  await page.getByRole('tab', { name: 'movements' }).click()
+  const ledgerRow = page.getByRole('table').getByRole('row').filter({ hasText: sku }).first()
+  await expect(ledgerRow.getByText('RECEIVE')).toBeVisible()
+  await expect(ledgerRow.getByText('d0e00000-0000-4000-8000-000000000001')).toBeVisible()
+})

@@ -16,6 +16,7 @@ import {
 } from '@/features/inventory/queries'
 import {
   AdjustStockDialog,
+  ReceiveFirstStockDialog,
   ReceiveStockDialog,
 } from '@/features/inventory/stock-command-dialogs'
 import { ApiError } from '@/lib/api'
@@ -166,6 +167,9 @@ function BalancesView({ pagination, onPaginationChange }: ViewProps) {
   )
   const [receiveFor, setReceiveFor] = useState<Balance | null>(null)
   const [adjustFor, setAdjustFor] = useState<Balance | null>(null)
+  // ADR-053 bootstrap: page-level, not a row action — an untracked SKU has no
+  // row to act on, which is exactly why this affordance exists.
+  const [bootstrap, setBootstrap] = useState(false)
   const skuFilter = useSkuFilterBox()
 
   const columns = balanceColumns.columns([
@@ -219,6 +223,10 @@ function BalancesView({ pagination, onPaginationChange }: ViewProps) {
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         {skuFilter}
+        <span className="flex items-center gap-3">
+        <Button size="sm" variant="outline" onClick={() => setBootstrap(true)}>
+          Receive first stock
+        </Button>
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <input
             type="checkbox"
@@ -235,6 +243,7 @@ function BalancesView({ pagination, onPaginationChange }: ViewProps) {
           />
           Low stock only (ATP ≤ safety)
         </label>
+        </span>
       </div>
       <DataTable
         columns={columns}
@@ -252,6 +261,12 @@ function BalancesView({ pagination, onPaginationChange }: ViewProps) {
       ) : null}
       {adjustFor ? (
         <AdjustStockDialog balance={adjustFor} onClose={() => setAdjustFor(null)} />
+      ) : null}
+      {bootstrap ? (
+        <ReceiveFirstStockDialog
+          initialSkuId={search.sku_id}
+          onClose={() => setBootstrap(false)}
+        />
       ) : null}
     </div>
   )
