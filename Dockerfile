@@ -1,7 +1,10 @@
 # ===================================
 # Stage 1: Build the SPA with Node
 # ===================================
-FROM node:26-alpine AS builder
+# --platform pins the builder to the BUILD host. The vite output in dist/ is
+# architecture-independent, so a multi-arch build only pays for the runtime
+# stage instead of running npm ci + vite under emulation.
+FROM --platform=$BUILDPLATFORM node:26-alpine AS builder
 RUN apk add --no-cache --upgrade zlib libcrypto3 libssl3 nghttp2-libs
 
 # Build-time configuration (same conditional-bake pattern as the customer
