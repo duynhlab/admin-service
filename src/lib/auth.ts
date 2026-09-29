@@ -47,25 +47,45 @@ keycloak.onTokenExpired = () => {
 let initPromise: Promise<boolean> | null = null
 
 /**
+ * How long the first render waits for keycloak.init(). check-sso resolves
+ * through a hidden same-origin iframe that postMessages back; if that frame is
+ * blocked (an `X-Frame-Options: DENY` on the portal's own origin did exactly
+ * this) init never settles, and without a bound the app never renders.
+ */
+const INIT_TIMEOUT_MS = 10_000
+
+/**
  * Initialize the adapter exactly once (check-sso: resume an existing SSO
  * session silently via the hidden iframe, never force a login redirect).
  * main.tsx awaits this before rendering so route guards see settled state.
+ *
+ * Never blocks the render for longer than INIT_TIMEOUT_MS: on failure or
+ * timeout it logs (in every build: an operator's console is the only trace)
+ * and resolves false, so the portal renders signed out. If init settles
+ * later, onAuthSuccess fires `auth-change` and the UI catches up.
  */
 export function initAuth(): Promise<boolean> {
-  initPromise ??= keycloak
-    .init({
-      onLoad: 'check-sso',
-      pkceMethod: 'S256',
-      silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
-    })
-    .catch((error: unknown) => {
-      // Keycloak unreachable or misconfigured: render logged-out instead of a
-      // blank page; a login attempt will surface the failure.
-      if (import.meta.env.DEV) {
+  initPromise ??= new Promise<boolean>((resolve) => {
+    const timer = window.setTimeout(() => {
+      console.error(
+        `[keycloak] init did not settle within ${INIT_TIMEOUT_MS / 1000}s; rendering signed out`,
+      )
+      resolve(false)
+    }, INIT_TIMEOUT_MS)
+    keycloak
+      .init({
+        onLoad: 'check-sso',
+        pkceMethod: 'S256',
+        silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+      })
+      .then(resolve, (error: unknown) => {
+        // Keycloak unreachable or misconfigured: render logged-out instead of
+        // a blank page; a login attempt will surface the failure.
         console.error('[keycloak] init failed:', error)
-      }
-      return false
-    })
+        resolve(false)
+      })
+      .finally(() => window.clearTimeout(timer))
+  })
   return initPromise
 }
 
