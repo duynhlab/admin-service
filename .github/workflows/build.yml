@@ -41,7 +41,7 @@ jobs:
 
   docker-build:
     needs: [lint, gitleaks]
-    uses: duynhlab/gha-workflows/.github/workflows/docker-build-node.yml@566b62220abb6db150099ca11cb7a9904288f3b5 # main — align with checkout-service/frontend (ADR-053 train)
+    uses: duynhlab/gha-workflows/.github/workflows/docker-build-node.yml@ad936a94f1f5660000098dcc3fe917e88d1e916d # main — align with checkout-service/frontend (ADR-053 train)
     with:
       image-name: '${{ github.event.repository.name }}'
       push: true
