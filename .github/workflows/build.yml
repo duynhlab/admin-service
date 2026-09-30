@@ -34,7 +34,7 @@ jobs:
         run: npm run build
 
   gitleaks:
-    uses: duynhlab/gha-workflows/.github/workflows/gitleaks.yml@e321897e5c28e7c861b9d8beb37614e1c5823f42 # main — align with checkout-service/frontend (ADR-053 train)
+    uses: duynhlab/gha-workflows/.github/workflows/gitleaks.yml@ad936a94f1f5660000098dcc3fe917e88d1e916d # main — align with checkout-service/frontend (ADR-053 train)
     permissions:
       contents: read
       security-events: write
