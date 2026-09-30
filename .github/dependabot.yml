@@ -1,0 +1,28 @@
+# Dependabot — mirrors the Go services' convention (daily, labeled), adapted
+# to the npm ecosystem: minor/patch updates arrive grouped so routine bumps
+# are one reviewable PR instead of ten, majors stay individual.
+# Same file as frontend/.github/dependabot.yml (ADR-053 train).
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    labels: ["dependencies", "npm"]
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    labels: ["dependencies", "github-actions"]
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    labels: ["dependencies", "docker"]
