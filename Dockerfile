@@ -42,8 +42,10 @@ RUN ls -la /app/dist
 # ===================================
 FROM nginx:alpine
 # Upgrade all OS packages to clear known Alpine CVEs in the runtime image
-# (this is the image Trivy scans).
-RUN apk -U --no-cache upgrade
+# (this is the image Trivy scans). CI builds from a registry layer cache, which
+# reuses this layer until the instruction text changes, so a newly fixed CVE is
+# named here: pcre2 10.49-r0 fixes CVE-2026-103111.
+RUN apk -U --no-cache upgrade && apk add --no-cache --upgrade pcre2
 
 RUN rm -rf /usr/share/nginx/html/*
 COPY --from=builder /app/dist /usr/share/nginx/html
