@@ -86,14 +86,14 @@ export function listOpenAttempts(
   q: { page: number; page_size: number },
   signal?: AbortSignal,
 ) {
-  return apiFetch<Paginated<PaymentAttempt>>('/payment/v1/protected/attempts/open', {
-    query: { page: q.page, page_size: q.page_size },
+  return apiFetch<Paginated<PaymentAttempt>>('/payment/v1/protected/payments/attempts', {
+    query: { status: 'open', page: q.page, page_size: q.page_size },
     signal,
   })
 }
 
 export function listReconRuns(q: { page: number; page_size: number }, signal?: AbortSignal) {
-  return apiFetch<Paginated<ReconRun>>('/payment/v1/protected/reconciliations/runs', {
+  return apiFetch<Paginated<ReconRun>>('/payment/v1/protected/payments/reconciliation/runs', {
     query: { page: q.page, page_size: q.page_size },
     signal,
   })
@@ -101,7 +101,7 @@ export function listReconRuns(q: { page: number; page_size: number }, signal?: A
 
 export function getReconRun(id: number, signal?: AbortSignal) {
   return apiFetch<{ run: ReconRun; discrepancies: ReconDiscrepancy[] }>(
-    `/payment/v1/protected/reconciliations/runs/${id}`,
+    `/payment/v1/protected/payments/reconciliation/runs/${id}`,
     { signal },
   )
 }
