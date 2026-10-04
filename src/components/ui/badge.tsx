@@ -9,7 +9,8 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        // /90 for the same reason as the default button.
+        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/90",
         secondary:
           "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
         // text-destructive-on-tint, not text-destructive: the base token is
