@@ -35,6 +35,14 @@ test('catalog lists real products with their lifecycle state', async ({ page }) 
   await expect(page.getByRole('columnheader', { name: 'Status' })).toBeVisible()
   await expect(page.getByRole('columnheader', { name: 'Ver' })).toBeVisible()
 
+  // The seed publishes every product, so a fresh stack has no DRAFT row until
+  // something creates one. Create it here rather than lean on a later spec.
+  await page.getByRole('button', { name: 'New product' }).click()
+  await page.getByLabel('Name').fill(uniqueName())
+  await page.getByLabel('Price').fill('9.5')
+  await page.getByLabel('Category').fill('Accessories')
+  await page.getByRole('button', { name: 'Create draft' }).click()
+
   // Assert through the FILTER, not through page 1. The list is newest-first, so
   // on a stack where the audit has just created a page's worth of drafts there
   // is legitimately no ACTIVE row on the first page — asserting on page 1
