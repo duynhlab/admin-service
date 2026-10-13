@@ -30,3 +30,6 @@ playwright-report/
 # local env overrides
 .env
 .env.local
+
+# Isolated design preview output
+dist-analytics-preview/

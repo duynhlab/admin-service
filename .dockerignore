@@ -3,3 +3,6 @@ dist
 test-results
 playwright-report
 .git
+
+previews
+dist-analytics-preview

@@ -12,7 +12,10 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "dev:analytics": "vite --config vite.analytics.config.ts",
+    "check:analytics": "tsc -p tsconfig.analytics.json",
+    "test:analytics": "playwright test --config playwright.analytics.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -29,6 +32,7 @@
     "lucide-react": "^1.51.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "recharts": "3.10.1",
     "shadcn": "^4.21.1",
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.3",
