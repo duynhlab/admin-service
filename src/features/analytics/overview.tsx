@@ -29,7 +29,7 @@ export function AnalyticsOverview({ filters, onFiltersChange, state, onRefresh, 
   const health = data ? availability(data, currentTime) : 'unavailable'
   const blocked = state.kind === 'ready' && health === 'unavailable' ? 'unavailable' : state.kind
   const empty = data && data.funnel.checkout_started === 0 && data.kpis.captured_orders === 0
-    && data.trend.every((row) => row.settled_capture_minor === 0 && row.refunded_minor === 0)
+    && data.trend.every((row) => row.settled_capture_minor === '0' && row.refunded_minor === '0')
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-start justify-between gap-3">

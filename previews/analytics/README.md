@@ -1,7 +1,7 @@
 # Commerce Analytics design preview
 
-Review the RFC-0030 Analytics screen before its Go API and Linux qualification
-are available. This is an isolated frontend preview, not a deployed Admin page.
+Review the RFC-0030 Analytics screen while the Go API is in draft and Linux
+qualification remains pending. This is an isolated frontend preview, not a deployed Admin page.
 The owner authorized illustrative fixtures for this preview; the application's
 no-mock rule remains in force.
 
@@ -37,15 +37,14 @@ clock is frozen at **2026-10-13 10:00 UTC**, prominently labelled on screen.
   Back/Forward restores them. Unapplied filter drafts belong to TanStack Form.
 - Query owns the asynchronously loaded illustrative result. Filter changes do
   not carry a previous currency/range's result into the new view.
-- USD and VND demonstrate two decimal exponents, not currency conversion or a
-  promise about the backend's supported currency list.
+- USD is the only v1 currency; there is no conversion mode.
 
 ## Draft presentation contract
 
 `src/features/analytics/contract.ts` defines Zod schemas and inferred TypeScript
-types for review. The accepted RFC/ADR govern semantics; these field names are
-not yet an as-built API contract. Final API ownership stays in homelab
-`docs/api/analytics.md` when the backend is implemented.
+types aligned with the draft Go response. Exact API ownership lives in the
+[draft canonical contract](https://github.com/duynhlab/homelab/blob/feat/rfc0030-phase0/docs/api/analytics.md).
+The implementation is not deployed, and these fixtures are not runtime evidence.
 
 | Field | Meaning |
 |---|---|
@@ -60,10 +59,12 @@ not yet an as-built API contract. Final API ownership stays in homelab
 | `top_products` | At most ten rows ranked by item subtotal, with historical name, quantity and order count; item subtotal is not revenue |
 | `meta` | `generated_at`, oldest source `data_through`, `stale`, and exactly order/checkout/payment source health |
 
-Current presentation schemas accept only safe integer minor-unit values. The
-backend integration must settle encoding for larger int64 totals and confirm
-supported currencies and metric window semantics before publishing the contract.
-The UI must never silently coerce unsafe JSON integers or sum across currencies.
+All money fields are canonical decimal integer strings. Formatting uses BigInt,
+including negative values and aggregates above the JavaScript safe-integer limit.
+The chart converts only bounded coordinates; larger values automatically show an
+exact table. The `large-money` preview exercises that fallback. Counts remain
+safe JSON integers. Ledger totals use event dates, while funnel membership uses
+checkout-created dates and current observed stages.
 
 All business values come from the response. Only formatting, cohort percentages
 and conservative expiry of cached freshness are calculated in the view. A

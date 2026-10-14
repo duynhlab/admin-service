@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 // Draft presentation contract for RFC-0030; not a deployed API contract.
-export const currencies = ['USD', 'VND'] as const
+export const currencies = ['USD'] as const
 const day = 86_400_000
 export const filtersSchema = z.object({
   currency: z.enum(currencies),
@@ -16,7 +16,7 @@ export const filtersSchema = z.object({
 export type Filters = z.infer<typeof filtersSchema>
 export const sourceNames = ['order', 'checkout', 'payment'] as const
 const count = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
-const minor = z.number().int().min(Number.MIN_SAFE_INTEGER).max(Number.MAX_SAFE_INTEGER)
+const minor = z.string().regex(/^(0|-?[1-9][0-9]*)$/)
 const amounts = { settled_capture_minor: minor, refunded_minor: minor, net_captured_minor: minor }
 export const overviewSchema = z.object({
   filters: filtersSchema,
@@ -55,11 +55,25 @@ export function availability(data: Overview, now: number): Availability {
   return stale || throughAge > 120 ? 'stale' : 'healthy'
 }
 
-export function money(value: number | null, currency: Filters['currency']): string {
+export function money(value: string | null, currency: Filters['currency']): string {
   if (value === null) return '—'
-  const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'symbol' })
-  const exponent = formatter.resolvedOptions().maximumFractionDigits ?? 2
-  return formatter.format(value / 10 ** exponent)
+  const amount = BigInt(value)
+  const negative = amount < 0n
+  const absolute = negative ? -amount : amount
+  const major = absolute / 100n
+  const fraction = (absolute % 100n).toString().padStart(2, '0')
+  const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency })
+  const formatted = formatter.formatToParts(negative ? -major : major)
+    .map((part) => part.type === 'fraction' ? fraction : part.value).join('')
+  return negative && major === 0n ? `-${formatted}` : formatted
+}
+
+// Leave room for the chart library's padded domains and intermediate arithmetic.
+// Exact money stays in strings; only bounded display coordinates become numbers.
+export function chartSafe(data: Overview['trend']): boolean {
+  const limit = BigInt(Math.floor(Number.MAX_SAFE_INTEGER / 4))
+  return data.every((row) => [row.settled_capture_minor, row.refunded_minor, row.net_captured_minor]
+    .every((value) => BigInt(value) >= -limit && BigInt(value) <= limit))
 }
 
 export function presetFilters(filters: Filters, days: number): Filters {

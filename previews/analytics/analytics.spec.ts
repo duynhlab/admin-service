@@ -27,8 +27,9 @@ test('range and money contract rejects ambiguity and preserves currency units', 
     { ...defaultFilters, from: '2026-01-01' }, { ...defaultFilters, currency: 'ANY' },
     { ...defaultFilters, sql: 'SELECT 1' },
   ]) expect(filtersSchema.safeParse(input).success).toBe(false)
-  expect(money(12345, 'USD')).toBe('$123.45')
-  expect(money(12345, 'VND')).toBe('₫12,345')
+  expect(money('12345', 'USD')).toBe('$123.45')
+  expect(money('-1', 'USD')).toBe('-$0.01')
+  expect(money('900719925474099312345', 'USD')).toBe('$9,007,199,254,740,993,123.45')
   expect(money(null, 'USD')).toBe('—')
   const duplicate = makeOverview(defaultFilters, 'healthy')
   duplicate.meta.sources[0] = duplicate.meta.sources[1]!
@@ -36,11 +37,11 @@ test('range and money contract rejects ambiguity and preserves currency units', 
 })
 
 test('illustrative trend reconciles with the displayed totals', () => {
-  for (const currency of ['USD', 'VND'] as const) {
+  for (const currency of ['USD'] as const) {
     const data = makeOverview({ ...defaultFilters, currency }, 'healthy')
-    const sum = data.trend.reduce((value, row) => value + row.net_captured_minor, 0)
-    expect(sum).toBe(data.kpis.net_captured_minor)
-    expect(data.kpis.settled_capture_minor - data.kpis.refunded_minor).toBe(sum)
+    const sum = data.trend.reduce((value, row) => value + BigInt(row.net_captured_minor), 0n)
+    expect(sum.toString()).toBe(data.kpis.net_captured_minor)
+    expect(BigInt(data.kpis.settled_capture_minor) - BigInt(data.kpis.refunded_minor)).toBe(sum)
   }
 })
 
@@ -54,10 +55,10 @@ test('filters, theme and history work without any backend requests', async ({ pa
   await expect(page.getByText('Design preview · Illustrative data only')).toBeVisible()
   await page.getByRole('button', { name: '30 days', exact: true }).click()
   await expect(page).toHaveURL(/from=2026-09-13/)
-  await page.getByLabel('Currency', { exact: true }).selectOption('VND')
+  await page.getByLabel('From · UTC', { exact: true }).fill('2026-10-01')
   await page.getByRole('button', { name: 'Apply', exact: true }).click()
-  await expect(page).toHaveURL(/currency=VND/)
-  await expect(page.getByRole('region', { name: 'Commerce KPIs' })).toContainText('₫')
+  await expect(page).toHaveURL(/from=2026-10-01/)
+  await expect(page.getByRole('region', { name: 'Commerce KPIs' })).toContainText('$')
   await page.goBack()
   await expect(page.getByLabel('Currency', { exact: true })).toHaveValue('USD')
   await page.getByRole('button', { name: 'Show data table' }).click()
@@ -132,4 +133,20 @@ test('production bundle excludes preview and fixtures', () => {
     expect(bundle).not.toContain(marker)
   }
   expect(readFileSync('src/routeTree.gen.ts', 'utf8')).not.toContain('analytics')
+})
+
+
+test('large integer money uses an exact table instead of an unsafe chart', async ({ page }) => {
+  await page.goto('/?scenario=large-money')
+  await expect(page.getByText('Amounts are too large to chart accurately. Exact values are shown below.')).toBeVisible()
+  await expect(page.getByRole('table', { name: /Daily capture values/ })).toContainText('$9,007,199,254,740,993,123.45')
+  await expect(page.getByRole('img', { name: /Daily capture trend/ })).toHaveCount(0)
+})
+
+test('money contract rejects numeric, fractional and noncanonical values', () => {
+  const data = makeOverview(defaultFilters, 'healthy')
+  for (const value of [1, 9007199254740992, '1.5', '01', '-0', '+1', '1e3']) {
+    expect(overviewSchema.safeParse({ ...data, kpis: { ...data.kpis, settled_capture_minor: value } }).success).toBe(false)
+  }
+  expect(filtersSchema.safeParse({ ...defaultFilters, currency: 'VND' }).success).toBe(false)
 })

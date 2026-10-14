@@ -3,14 +3,14 @@ import type { Filters, Overview } from '../../src/features/analytics/contract'
 
 // Owner-approved design fixtures. This module is never imported by the app entry.
 export const previewTime = Date.parse('2026-10-13T10:00:00Z')
-export const scenarios = ['healthy', 'stale', 'empty', 'loading', 'unavailable', 'unknown', 'error', 'refresh-error', 'forbidden', 'awaiting'] as const
+export const scenarios = ['healthy', 'stale', 'empty', 'loading', 'unavailable', 'unknown', 'error', 'refresh-error', 'forbidden', 'awaiting', 'large-money'] as const
 export type Scenario = typeof scenarios[number]
 export const defaultFilters: Filters = { currency: 'USD', from: '2026-10-06', to: '2026-10-13' }
 
 export function makeOverview(filters: Filters, scenario: Scenario): Overview {
   const empty = scenario === 'empty'
   const days = (Date.parse(filters.to) - Date.parse(filters.from)) / 86_400_000
-  const unit = filters.currency === 'USD' ? 1 : 250
+  const unit = 1
   const trend: Overview['trend'] = []
   let capturedOrders = 0
   let started = 0
@@ -26,11 +26,15 @@ export function makeOverview(filters: Filters, scenario: Scenario): Overview {
     completed += empty ? 0 : captured - 3
     const settled = captured * (5900 + seed * 100) * unit
     const refunded = empty ? 0 : (seed % 3) * 2900 * unit
-    trend.push({ date: new Date(timestamp).toISOString().slice(0, 10), settled_capture_minor: settled,
-      refunded_minor: refunded, net_captured_minor: settled - refunded })
+    trend.push({ date: new Date(timestamp).toISOString().slice(0, 10), settled_capture_minor: String(settled),
+      refunded_minor: String(refunded), net_captured_minor: String(settled - refunded) })
   }
-  const settled = trend.reduce((sum, row) => sum + row.settled_capture_minor, 0)
-  const refunded = trend.reduce((sum, row) => sum + row.refunded_minor, 0)
+  if (scenario === 'large-money' && trend[0]) {
+    trend[0].settled_capture_minor = '900719925474099312345'
+    trend[0].net_captured_minor = (BigInt(trend[0].settled_capture_minor) - BigInt(trend[0].refunded_minor)).toString()
+  }
+  const settled = trend.reduce((sum, row) => sum + BigInt(row.settled_capture_minor), 0n)
+  const refunded = trend.reduce((sum, row) => sum + BigInt(row.refunded_minor), 0n)
   const sources: Overview['meta']['sources'] = [
     { name: 'order', synced_at: new Date(previewTime - 30_000).toISOString(), lag_seconds: 30, state: 'healthy' },
     { name: 'checkout', synced_at: new Date(previewTime - 45_000).toISOString(), lag_seconds: 45, state: 'healthy' },
@@ -49,15 +53,15 @@ export function makeOverview(filters: Filters, scenario: Scenario): Overview {
   const names = ['Mechanical keyboard', 'USB-C dock', 'Studio headphones', 'Wireless mouse', 'Desk mat']
   return overviewSchema.parse({
     filters,
-    kpis: { settled_capture_minor: settled, refunded_minor: refunded, net_captured_minor: settled - refunded,
-      captured_orders: capturedOrders, average_captured_order_minor: capturedOrders ? Math.round(settled / capturedOrders) : null },
+    kpis: { settled_capture_minor: settled.toString(), refunded_minor: refunded.toString(), net_captured_minor: (settled - refunded).toString(),
+      captured_orders: capturedOrders, average_captured_order_minor: capturedOrders ? ((settled * 2n + BigInt(capturedOrders)) / (2n * BigInt(capturedOrders))).toString() : null },
     trend,
     funnel: { checkout_started: started, order_created: created, payment_captured: capturedOrders, order_completed: completed },
     top_products: empty ? [] : names.map((name, index) => ({
       product_id: `preview-${index + 1}`, product_name: name,
       quantity: Math.floor(capturedOrders / (index + 2)) + 2,
       order_count: Math.floor(capturedOrders / (index + 2)),
-      item_subtotal_minor: (Math.floor(capturedOrders / (index + 2)) + 2) * (5900 - index * 900) * unit,
+      item_subtotal_minor: String((Math.floor(capturedOrders / (index + 2)) + 2) * (5900 - index * 900) * unit),
     })),
     meta: { generated_at: new Date(previewTime).toISOString(),
       data_through: new Date(Math.min(...sources.filter((s) => s.synced_at !== null).map((s) => Date.parse(s.synced_at!)))).toISOString(),
