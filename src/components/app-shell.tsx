@@ -1,5 +1,6 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
+  BarChart3,
   Boxes,
   LayoutDashboard,
   LogOut,
@@ -30,9 +31,9 @@ interface NavItem {
 }
 
 /**
- * The seven RFC-0023 sections. Every item routes to a real page; sections
- * whose backend slice has not shipped render an explicit awaiting-API state
- * (never mock data).
+ * The seven RFC-0023 sections plus Analytics (ADR-069). Every item routes to
+ * a real page; sections whose backend slice has not shipped render an
+ * explicit awaiting-API state (never mock data).
  */
 const NAV_ITEMS: Array<NavItem> = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -42,6 +43,7 @@ const NAV_ITEMS: Array<NavItem> = [
   { to: '/payments', label: 'Payments', icon: Wallet },
   { to: '/shipments', label: 'Shipments', icon: Truck },
   { to: '/customers', label: 'Customers', icon: Users },
+  { to: '/analytics', label: 'Analytics', icon: BarChart3 },
 ]
 
 function NavLinks() {

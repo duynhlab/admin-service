@@ -1,8 +1,0 @@
-@import "../../src/index.css";
-
-/* The isolated Vite root sits outside src; include the shared components. */
-@source "../../src";
-@source ".";
-
-:root { color-scheme: light; }
-:root.dark { color-scheme: dark; }
