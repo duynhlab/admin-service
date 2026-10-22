@@ -36,11 +36,3 @@ Configuration is baked at build time via `VITE_API_BASE_URL`,
 
 Agent guidance: [AGENTS.md](AGENTS.md).
 
-## Analytics UI preview (RFC-0030)
-
-An isolated, owner-approved design preview is available with
-`npm run dev:analytics` at `http://127.0.0.1:3010/`. It uses clearly labelled
-illustrative fixtures, needs no local-stack, and is excluded from the production
-app. See the [preview guide](previews/analytics/README.md) for states, the draft
-presentation contract and verification. Backend integration and release gates
-remain pending.

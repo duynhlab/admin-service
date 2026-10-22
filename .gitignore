@@ -31,5 +31,3 @@ playwright-report/
 .env
 .env.local
 
-# Isolated design preview output
-dist-analytics-preview/

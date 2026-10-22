@@ -37,17 +37,6 @@ jobs:
       - name: Build (typecheck + bundle)
         run: npm run build
 
-      - name: Typecheck isolated analytics preview
-        run: npm run check:analytics
-
-      - name: Install preview test browser
-        run: npx playwright install --with-deps chromium
-
-      - name: Test isolated analytics UI (not runtime qualification)
-        run: npm run test:analytics
-
-  # The owner-approved analytics preview uses isolated illustrative fixtures.
-  # It does not replace the real-stack acceptance gate below.
   # No deployed-app CI e2e job on purpose: the portal has NO mock layer (owner rule), so
   # Playwright needs the live local-stack (Keycloak + edge + services). The
   # e2e gate runs locally against compose per homelab
