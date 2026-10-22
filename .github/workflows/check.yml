@@ -37,7 +37,7 @@ jobs:
       - name: Build (typecheck + bundle)
         run: npm run build
 
-  # No CI e2e job on purpose: the portal has NO mock layer (owner rule), so
+  # No deployed-app CI e2e job on purpose: the portal has NO mock layer (owner rule), so
   # Playwright needs the live local-stack (Keycloak + edge + services). The
   # e2e gate runs locally against compose per homelab
   # local-stack/docs/e2e-audit.md before anything merges or tags.

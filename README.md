@@ -35,3 +35,4 @@ Configuration is baked at build time via `VITE_API_BASE_URL`,
 (defaults target local-stack).
 
 Agent guidance: [AGENTS.md](AGENTS.md).
+
