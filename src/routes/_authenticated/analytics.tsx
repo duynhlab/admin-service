@@ -18,8 +18,11 @@ import { ApiError } from '@/lib/api'
 
 const day = 86_400_000
 
+// `to` is exclusive, so the default window ends tomorrow (UTC): the last seven
+// days including today. Ending it today would hide everything from today.
 function defaultFilters(): Filters {
-  const to = new Date().toISOString().slice(0, 10)
+  const today = new Date().toISOString().slice(0, 10)
+  const to = new Date(Date.parse(today) + day).toISOString().slice(0, 10)
   const from = new Date(Date.parse(to) - 7 * day).toISOString().slice(0, 10)
   return { currency: 'USD', from, to }
 }
