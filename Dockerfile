@@ -8,7 +8,7 @@
 # --platform pins the builder to the BUILD host. The vite output in dist/ is
 # architecture-independent, so a multi-arch build only pays for the runtime
 # stage instead of running npm ci + vite under emulation.
-FROM --platform=$BUILDPLATFORM node:26.10.0-alpine@sha256:0b36e8c136b94cd4fcf02188228e76c31ad5872eef3fec8cbd2eee500cfd9e80 AS builder
+FROM --platform=$BUILDPLATFORM node:26.12.0-alpine@sha256:6f08a523443ddedf52941874c203475b0ad503e859ad70cb26ab8be9a517dbd5 AS builder
 RUN apk add --no-cache --upgrade zlib libcrypto3 libssl3 nghttp2-libs
 
 # Build-time configuration (same conditional-bake pattern as the customer
