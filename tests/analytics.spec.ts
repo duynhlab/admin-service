@@ -32,6 +32,9 @@ test('analytics renders live figures with fresh sources', async ({ page }) => {
   await loginAs(page, 'duyne', 'p@ss1234')
   await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Analytics' }).click()
   await expect(page).toHaveURL(/\/analytics\?currency=USD&from=\d{4}-\d{2}-\d{2}&to=\d{4}-\d{2}-\d{2}/)
+  // The default window includes today: `to` is exclusive, so it is tomorrow (UTC).
+  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)
+  expect(new URL(page.url()).searchParams.get('to')).toBe(tomorrow)
   await expect(page.getByRole('heading', { name: 'Analytics' })).toBeVisible()
 
   // The freshness banner is the server's verdict rendered as-is.
