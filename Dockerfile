@@ -44,7 +44,7 @@ RUN ls -la /app/dist
 # ===================================
 # Stage 2: Serve with nginx
 # ===================================
-FROM nginx:1.31.7-alpine@sha256:892bb2152464f0c5d8972593a5f5afaf8054552580b699d95f8ff4af08c2d33d
+FROM nginx:1.31.8-alpine@sha256:1ef7ca94d7879df82421428ce13bd1eaa412404953859cf7a5b6512c25e67a60
 # Upgrade all OS packages to clear known Alpine CVEs in the runtime image
 # (this is the image Trivy scans). CI builds from a registry layer cache, which
 # reuses this layer until the instruction text changes, so a newly fixed CVE is
